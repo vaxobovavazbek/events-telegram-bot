@@ -16,3 +16,8 @@ WEBHOOK_URL = f'{WEBHOOK_HOST}{WEBHOOK_PATH}'
 # webserver settings
 WEBAPP_HOST = '0.0.0.0'
 WEBAPP_PORT = int(os.environ.get('PORT', '8443'))
+
+# mongodb
+DATABASE_NAME = 'eventsNotifier'
+USERS_COLLECTION_NAME = 'users'
+MONGODB_URI = os.environ.get('MONGODB_URI', f'mongodb://localhost:27017/{DATABASE_NAME}')
