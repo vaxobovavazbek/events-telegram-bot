@@ -3,7 +3,7 @@ import logging
 from telegram import Update
 from telegram.ext import Updater, CommandHandler, MessageHandler, Filters, CallbackContext
 
-from bot.settings import BOT_TOKEN, USERS_COLLECTION_NAME
+from bot.settings import BOT_TOKEN, USERS_COLLECTION_NAME, WEBAPP_HOST, WEBAPP_PORT, WEBHOOK_URL
 from database.mongo import remove_from_collection, insert_to_collection, exists_in_collection
 
 
@@ -61,10 +61,7 @@ def error(update: Update, context: CallbackContext):
 class EventsBot:
     def __init__(self):
         self.updater = Updater(BOT_TOKEN, use_context=True)
-
-        # Get the dispatcher to register handlers
         self.dp = self.updater.dispatcher
-
         self._register_handlers()
 
     def _register_handlers(self):
@@ -81,13 +78,11 @@ class EventsBot:
         self.dp.add_error_handler(error)
 
     def start(self):
-        # Start the Bot
+        self._start_webhook()
+        self.updater.idle()
+
+    def _start_webhook(self):
         self.updater.start_webhook(listen=WEBAPP_HOST,
                                    port=WEBAPP_PORT,
                                    url_path=BOT_TOKEN,
                                    webhook_url=WEBHOOK_URL)
-
-        # Run the bot until you press Ctrl-C or the process receives SIGINT,
-        # SIGTERM or SIGABRT. This should be used most of the time, since
-        # start_polling() is non-blocking and will stop the bot gracefully.
-        self.updater.idle()
