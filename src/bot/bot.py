@@ -3,7 +3,8 @@ import logging
 from telegram import Update
 from telegram.ext import Updater, CommandHandler, MessageHandler, Filters, CallbackContext
 
-from bot.settings import BOT_TOKEN, WEBAPP_HOST, WEBAPP_PORT, WEBHOOK_URL
+from bot.settings import BOT_TOKEN, USERS_COLLECTION_NAME
+from database.mongo import remove_from_collection, insert_to_collection, exists_in_collection
 
 
 def start(update: Update, context: CallbackContext):
@@ -16,6 +17,40 @@ def help(update: Update, context: CallbackContext):
 
 def echo(update: Update, context: CallbackContext):
     update.message.reply_text(update.message.text)
+
+
+def subscribe(update: Update, context: CallbackContext) -> None:
+    user_id, username = str(update.message.from_user.id), update.message.from_user.username
+    logging.info(f"Subscribing user with id={user_id} and username = {username}")
+    if register_user(user_id, username):
+        update.message.reply_text("You have been subscribed!")
+    else:
+        update.message.reply_text("You are already subscribed...")
+
+
+def unsubscribe(update: Update, context: CallbackContext) -> None:
+    user_id, username = str(update.message.from_user.id), update.message.from_user.username
+    logging.info(f"Unsubscribing user with id={user_id} and username = {username}")
+    if unregister_user(user_id):
+        update.message.reply_text("You have been unsubscribed!")
+    else:
+        update.message.reply_text("You are not subscribed...")
+
+
+def register_user(user_id: str, username: str):
+    query = {"user_id": user_id, "username": username}
+    if exists_in_collection(USERS_COLLECTION_NAME, query):
+        return False
+    insert_to_collection(USERS_COLLECTION_NAME, query)
+    return True
+
+
+def unregister_user(user_id: str):
+    query = {"user_id": user_id}
+    if exists_in_collection(USERS_COLLECTION_NAME, query):
+        remove_from_collection(USERS_COLLECTION_NAME, query)
+        return True
+    return False
 
 
 def error(update: Update, context: CallbackContext):
@@ -36,6 +71,8 @@ class EventsBot:
         # on different commands - answer in Telegram
         self.dp.add_handler(CommandHandler('start', start))
         self.dp.add_handler(CommandHandler('help', help))
+        self.dp.add_handler(CommandHandler('subscribe', subscribe))
+        self.dp.add_handler(CommandHandler('unsubscribe', unsubscribe))
 
         # on non-command i.e message - echo the message on Telegram
         self.dp.add_handler(MessageHandler(Filters.text, echo))
