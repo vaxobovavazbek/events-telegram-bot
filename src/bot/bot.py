@@ -3,8 +3,8 @@ import logging
 from telegram import Update
 from telegram.ext import Updater, CommandHandler, MessageHandler, Filters, CallbackContext
 
-from bot.settings import BOT_TOKEN, USERS_COLLECTION_NAME, WEBAPP_HOST, WEBAPP_PORT, WEBHOOK_URL
-from database.mongo import remove_from_collection, insert_to_collection, exists_in_collection
+from bot.settings import BOT_TOKEN, WEBAPP_HOST, WEBAPP_PORT, WEBHOOK_URL
+from database.users_database import register_user, unregister_user
 
 
 def start(update: Update, context: CallbackContext):
@@ -20,37 +20,18 @@ def echo(update: Update, context: CallbackContext):
 
 
 def subscribe(update: Update, context: CallbackContext) -> None:
-    user_id, username = str(update.message.from_user.id), update.message.from_user.username
-    logging.info(f"Subscribing user with id={user_id} and username = {username}")
-    if register_user(user_id, username):
-        update.message.reply_text("You have been subscribed!")
-    else:
-        update.message.reply_text("You are already subscribed...")
+    user_id = str(update.message.from_user.id)
+    logging.info(f"Subscribing user with id={user_id}")
+    register_user(user_id=user_id, username=update.message.from_user.username,
+                  first_name=update.message.from_user.first_name, last_name=update.message.from_user.last_name)
+    update.message.reply_text("You have been subscribed!")
 
 
 def unsubscribe(update: Update, context: CallbackContext) -> None:
-    user_id, username = str(update.message.from_user.id), update.message.from_user.username
-    logging.info(f"Unsubscribing user with id={user_id} and username = {username}")
-    if unregister_user(user_id):
-        update.message.reply_text("You have been unsubscribed!")
-    else:
-        update.message.reply_text("You are not subscribed...")
-
-
-def register_user(user_id: str, username: str):
-    query = {"user_id": user_id, "username": username}
-    if exists_in_collection(USERS_COLLECTION_NAME, query):
-        return False
-    insert_to_collection(USERS_COLLECTION_NAME, query)
-    return True
-
-
-def unregister_user(user_id: str):
-    query = {"user_id": user_id}
-    if exists_in_collection(USERS_COLLECTION_NAME, query):
-        remove_from_collection(USERS_COLLECTION_NAME, query)
-        return True
-    return False
+    user_id = str(update.message.from_user.id)
+    logging.info(f"Unsubscribing user with id={user_id}")
+    unregister_user(user_id)
+    update.message.reply_text("You have been unsubscribed!")
 
 
 def error(update: Update, context: CallbackContext):
