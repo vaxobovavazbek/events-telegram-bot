@@ -12,7 +12,18 @@ def start(update: Update, context: CallbackContext):
 
 
 def help(update: Update, context: CallbackContext):
-    update.message.reply_text('Help!')
+    update.message.reply_text(text='''Events Notifier Bot -
+    
+The bot that will notify you of upcoming events in your favorite stadiums or venues.
+    
+How to use the bot: 
+
+Use the /subscribe command to subscribe to updates.
+Use the /unsubscribe command to unsubscribe from updates.
+Use the /help command to show this help message.
+
+For any questions or issues, please go to - https://github.com/oriash93/events-telegram-bot''',
+                              disable_web_page_preview=True)
 
 
 def echo(update: Update, context: CallbackContext):
