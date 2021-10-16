@@ -1,18 +1,14 @@
 import logging
 
+import requests
 from telegram import Update
 from telegram.ext import Updater, CommandHandler, MessageHandler, Filters, CallbackContext
 
-from bot.settings import BOT_TOKEN, WEBAPP_HOST, WEBAPP_PORT, WEBHOOK_URL
+from bot.settings import BOT_TOKEN, WEBAPP_HOST, WEBAPP_PORT, WEBHOOK_URL, NOTIFIER_URL
 from database.users_database import register_user, unregister_user
+from models.webhook import Webhook
 
-
-def start(update: Update, context: CallbackContext):
-    update.message.reply_text('Hi!')
-
-
-def help(update: Update, context: CallbackContext):
-    update.message.reply_text(text='''Events Notifier Bot -
+WELCOME_MESSAGE = '''Events Notifier Bot -
     
 The bot that will notify you of upcoming events in your favorite stadiums or venues.
     
@@ -22,8 +18,15 @@ Use the /subscribe command to subscribe to updates.
 Use the /unsubscribe command to unsubscribe from updates.
 Use the /help command to show this help message.
 
-For any questions or issues, please go to - https://github.com/oriash93/events-telegram-bot''',
-                              disable_web_page_preview=True)
+For any questions or issues, please go to - https://github.com/oriash93/events-telegram-bot'''
+
+
+def start(update: Update, context: CallbackContext):
+    update.message.reply_text(text=WELCOME_MESSAGE, disable_web_page_preview=True)
+
+
+def help(update: Update, context: CallbackContext):
+    update.message.reply_text(text=WELCOME_MESSAGE, disable_web_page_preview=True)
 
 
 def echo(update: Update, context: CallbackContext):
@@ -66,11 +69,9 @@ class EventsBot:
         # on non-command i.e message - echo the message on Telegram
         self.dp.add_handler(MessageHandler(Filters.text, echo))
 
-        # log all errors
-        self.dp.add_error_handler(error)
-
     def start(self):
         self._start_webhook()
+        self._register_notifier_webhook()
         self.updater.idle()
 
     def _start_webhook(self):
@@ -78,3 +79,9 @@ class EventsBot:
                                    port=WEBAPP_PORT,
                                    url_path=BOT_TOKEN,
                                    webhook_url=WEBHOOK_URL)
+
+    @staticmethod
+    def _register_notifier_webhook():
+        webhook = Webhook(url=WEBHOOK_URL, name='bot')
+        requests.post(url=NOTIFIER_URL, json=webhook.__dict__)
+        logging.info('notifier webhook registered successfully')
