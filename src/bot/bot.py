@@ -1,56 +1,16 @@
 import logging
+from threading import Thread
 
 import requests
-from telegram import Update
-from telegram.ext import Updater, CommandHandler, MessageHandler, Filters, CallbackContext
+from flask import Flask, request, make_response, jsonify
+from telegram.ext import Updater, CommandHandler, MessageHandler, Filters
 
-from bot.settings import BOT_TOKEN, WEBAPP_HOST, WEBAPP_PORT, WEBHOOK_URL, NOTIFIER_URL
-from database.users_database import register_user, unregister_user
+from bot.handlers import start_handler, subscribe_handler, unsubscribe_handler, help_handler, echo_handler
+from bot.settings import BOT_TOKEN, WEBAPP_HOST, WEBAPP_PORT, WEBHOOK_URL, NOTIFIER_URL, NOTIFIER_WEBHOOK_URL, \
+    NOTIFIER_WEBHOOK_PATH
+from database.users_database import retrieve_all_active_users
+from models.event import Event
 from models.webhook import Webhook
-
-WELCOME_MESSAGE = '''Events Notifier Bot -
-    
-The bot that will notify you of upcoming events in your favorite stadiums or venues.
-    
-How to use the bot: 
-
-Use the /subscribe command to subscribe to updates.
-Use the /unsubscribe command to unsubscribe from updates.
-Use the /help command to show this help message.
-
-For any questions or issues, please go to - https://github.com/oriash93/events-telegram-bot'''
-
-
-def start(update: Update, context: CallbackContext):
-    update.message.reply_text(text=WELCOME_MESSAGE, disable_web_page_preview=True)
-
-
-def help(update: Update, context: CallbackContext):
-    update.message.reply_text(text=WELCOME_MESSAGE, disable_web_page_preview=True)
-
-
-def echo(update: Update, context: CallbackContext):
-    update.message.reply_text(update.message.text)
-
-
-def subscribe(update: Update, context: CallbackContext) -> None:
-    user_id = str(update.message.from_user.id)
-    logging.info(f"Subscribing user with id={user_id}")
-    register_user(user_id=user_id, username=update.message.from_user.username,
-                  first_name=update.message.from_user.first_name, last_name=update.message.from_user.last_name)
-    update.message.reply_text("You have been subscribed!")
-
-
-def unsubscribe(update: Update, context: CallbackContext) -> None:
-    user_id = str(update.message.from_user.id)
-    logging.info(f"Unsubscribing user with id={user_id}")
-    unregister_user(user_id)
-    update.message.reply_text("You have been unsubscribed!")
-
-
-def error(update: Update, context: CallbackContext):
-    """Log Errors caused by Updates."""
-    logging.warning('Update "%s" caused error "%s"', update, context.error)
 
 
 class EventsBot:
@@ -60,14 +20,24 @@ class EventsBot:
         self._register_handlers()
 
     def _register_handlers(self):
-        # on different commands - answer in Telegram
-        self.dp.add_handler(CommandHandler('start', start))
-        self.dp.add_handler(CommandHandler('help', help))
-        self.dp.add_handler(CommandHandler('subscribe', subscribe))
-        self.dp.add_handler(CommandHandler('unsubscribe', unsubscribe))
+        self.dp.add_handler(CommandHandler('start', start_handler))
+        self.dp.add_handler(CommandHandler('help', help_handler))
+        self.dp.add_handler(CommandHandler('subscribe', subscribe_handler))
+        self.dp.add_handler(CommandHandler('unsubscribe', unsubscribe_handler))
 
-        # on non-command i.e message - echo the message on Telegram
-        self.dp.add_handler(MessageHandler(Filters.text, echo))
+        # on non-command i.e message - echo_handler the message on Telegram
+        self.dp.add_handler(MessageHandler(Filters.text, echo_handler))
+
+    def notify_users(self, event_data):
+        users = retrieve_all_active_users()
+        logging.info(f'Notifying for {len(list(users))} active users')
+        for user in users:
+            display_name = ''
+            if user.first_name:
+                display_name = user.first_name
+            elif user.username:
+                display_name = user.username
+            self.updater.bot.send_message(chat_id=user.user_id, text=f'Hey {display_name}, {event_data}')
 
     def start(self):
         self._start_webhook()
@@ -82,6 +52,29 @@ class EventsBot:
 
     @staticmethod
     def _register_notifier_webhook():
-        webhook = Webhook(url=WEBHOOK_URL, name='bot')
+        webhook = Webhook(url=NOTIFIER_WEBHOOK_URL, name='bot')
         requests.post(url=NOTIFIER_URL, json=webhook.__dict__)
-        logging.info('notifier webhook registered successfully')
+        logging.info('Notifier webhook registered successfully')
+
+
+app = Flask(__name__)
+bot = EventsBot()
+
+
+@app.route(NOTIFIER_WEBHOOK_PATH, methods=["POST"])
+def handle_notification():
+    data = request.get_json()
+    events = list(map(lambda raw_event: Event.from_raw(raw_event), data))
+    logging.info(f'Handling notification for {len(events)} events')
+    for event in events:
+        bot.notify_users(event)
+    return make_response(jsonify({}, 200))
+
+
+def start_flask_app():
+    app.run(port=WEBAPP_PORT, host=WEBAPP_HOST)
+
+
+def main():
+    Thread(target=start_flask_app).start()
+    bot.start()
