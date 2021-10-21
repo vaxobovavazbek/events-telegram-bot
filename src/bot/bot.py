@@ -6,8 +6,8 @@ from flask import Flask, request, make_response, jsonify
 from telegram.ext import Updater, CommandHandler, MessageHandler, Filters
 
 from bot.handlers import start_handler, subscribe_handler, unsubscribe_handler, help_handler, echo_handler
-from bot.settings import BOT_TOKEN, WEBAPP_HOST, WEBAPP_PORT, WEBHOOK_URL, NOTIFIER_URL, NOTIFIER_WEBHOOK_URL, \
-    NOTIFIER_WEBHOOK_PATH
+from bot.settings import BOT_TOKEN, WEBAPP_HOST, WEBAPP_PORT, BOT_WEBHOOK_URL, NOTIFIER_URL, NOTIFIER_WEBHOOK_URL, \
+    NOTIFIER_WEBHOOK_PATH, FLASK_HOST
 from database.users_database import retrieve_all_active_users
 from models.event import Event
 from models.webhook import Webhook
@@ -48,7 +48,7 @@ class EventsBot:
         self.updater.start_webhook(listen=WEBAPP_HOST,
                                    port=WEBAPP_PORT,
                                    url_path=BOT_TOKEN,
-                                   webhook_url=WEBHOOK_URL)
+                                   webhook_url=BOT_WEBHOOK_URL)
 
     @staticmethod
     def _register_notifier_webhook():
@@ -72,7 +72,7 @@ def handle_notification():
 
 
 def start_flask_app():
-    app.run(port=WEBAPP_PORT, host=WEBAPP_HOST)
+    app.run(port=WEBAPP_PORT, host=FLASK_HOST)
 
 
 def main():
