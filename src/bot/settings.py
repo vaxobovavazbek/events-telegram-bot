@@ -6,12 +6,12 @@ HEROKU_APP_NAME = os.getenv('HEROKU_APP_NAME')
 
 # web settings
 WEBAPP_PORT = int(os.getenv('PORT', '8443'))
-if not HEROKU_APP_NAME:  # dev
+if HEROKU_APP_NAME is None:  # dev
     WEBAPP_HOST = f'localhost:{WEBAPP_PORT}'
-    FLASK_HOST = '0.0.0.0'
+    FLASK_HOST = 'localhost'
 else:  # prod
     WEBAPP_HOST = f'https://{HEROKU_APP_NAME}.herokuapp.com'
-    FLASK_HOST = WEBAPP_HOST
+    FLASK_HOST = '0.0.0.0'
 BOT_WEBHOOK_PATH = f'/{BOT_TOKEN}'
 BOT_WEBHOOK_URL = f'{WEBAPP_HOST}{BOT_WEBHOOK_PATH}'
 
