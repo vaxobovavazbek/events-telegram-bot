@@ -7,6 +7,7 @@ from telebot.types import Message
 
 from bot.settings import LOG_LEVEL, BOT_TOKEN, UPDATE_MODE, PORT, BOT_WEBHOOK_URL, BOT_WEBHOOK_PATH, \
     NOTIFIER_WEBHOOK_PATH, NOTIFIER_WEBHOOK_URL
+from bot.utils import get_display_name
 from database.users_database import retrieve_all_active_users, add_user, remove_user
 from models.event import Event
 from notifier import notifier_api
@@ -29,7 +30,7 @@ For any questions or issues, please go to - https://github.com/oriash93/events-t
 
 @bot.message_handler(commands=['start'])
 def start_handler(message: Message) -> None:
-    bot.reply_to(message, text=f'Hello, {message.from_user.first_name}! Use the /help command :)')
+    bot.reply_to(message, text=f'Hey, please use the /help command :)')
 
 
 @bot.message_handler(commands=['help'])
@@ -81,14 +82,9 @@ def notify_webhook() -> Response:
 
 def notify_users(event_data: str) -> None:
     users = retrieve_all_active_users()
-    logging.info(f'Notifying for {len(list(users))} active users')
+    logging.info(f'Notifying {len(list(users))} active users')
     for user in users:
-        display_name = ''
-        if user.first_name:
-            display_name = user.first_name
-        elif user.username:
-            display_name = user.username
-        bot.send_message(chat_id=user.user_id, text=f'Hey {display_name}, {event_data}')
+        bot.send_message(chat_id=user.user_id, text=f'Hey {get_display_name(user)}, {event_data}')
 
 
 def main():
