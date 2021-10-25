@@ -1,1 +1,1 @@
-web: python3 src/app.py
+web: gunicorn -w 3 --pythonpath bot events_bot:server
