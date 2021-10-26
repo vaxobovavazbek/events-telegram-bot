@@ -16,4 +16,4 @@ def remove_user(user_id: str) -> None:
 
 
 def retrieve_all_active_users():
-    return User.objects().filter(is_active=True)
+    return User.objects.filter(is_active=True)

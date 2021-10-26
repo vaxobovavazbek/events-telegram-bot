@@ -41,19 +41,19 @@ def help_handler(message: Message) -> None:
 @bot.message_handler(commands=['subscribe'])
 def subscribe_handler(message: Message) -> None:
     user_id = str(message.from_user.id)
-    logging.info(f"Subscribing user with id={user_id}")
+    logging.info(f'Subscribing user with id={user_id}')
     add_user(user_id=user_id, username=message.from_user.username,
              first_name=message.from_user.first_name, last_name=message.from_user.last_name)
-    logging.info(f"User with id={user_id} subscribed successfully")
+    logging.info(f'User with id={user_id} subscribed successfully')
     bot.reply_to(message, text='You have been subscribed!')
 
 
 @bot.message_handler(commands=['unsubscribe'])
 def unsubscribe_handler(message: Message) -> None:
     user_id = str(message.from_user.id)
-    logging.info(f"Unsubscribing user with id={user_id}")
+    logging.info(f'Unsubscribing user with id={user_id}')
     remove_user(user_id)
-    logging.info(f"User with id={user_id} unsubscribed successfully")
+    logging.info(f'User with id={user_id} unsubscribed successfully')
     bot.reply_to(message, text='You have been unsubscribed!')
 
 
@@ -67,10 +67,10 @@ def bot_webhook():
     json_string = request.get_data().decode('utf-8')
     update = telebot.types.Update.de_json(json_string)
     bot.process_new_updates([update])
-    return "!", 200
+    return '!', 200
 
 
-@server.route(NOTIFIER_WEBHOOK_PATH, methods=["POST"])
+@server.route(NOTIFIER_WEBHOOK_PATH, methods=['POST'])
 def notify_webhook() -> Response:
     data = request.get_json()
     events = list(map(lambda raw_event: Event.from_raw(raw_event), data))
@@ -87,20 +87,28 @@ def notify_users(event_data: str) -> None:
         bot.send_message(chat_id=user.user_id, text=f'Hey {get_display_name(user)}, {event_data}')
 
 
-def main():
+def register_notifier_webhook():
+    logging.info('Registering notifier webhook')
     notifier_api.add_notifier_webhook(name='events_bot', url=NOTIFIER_WEBHOOK_URL)
+
+
+def main():
+    register_notifier_webhook()
 
     if UPDATE_MODE == 'webhook':
         bot.remove_webhook()
         bot.set_webhook(url=BOT_WEBHOOK_URL)
-        server.run(host="0.0.0.0", port=PORT)
-        logging.info(f"Start webhook mode on port {PORT}")
+        server.run(host='0.0.0.0', port=PORT)
+        logging.info(f'Start webhook mode on port {PORT}')
     else:
-        logging.info(f"Start polling mode")
+        logging.info(f'Start polling mode')
+        if bot.get_webhook_info().url:
+            bot.remove_webhook()
         bot.infinity_polling()
 
 
 if __name__ == '__main__':
     logging.basicConfig(format='%(asctime)s - %(levelname)s - %(message)s', level=LOG_LEVEL)
+    logger = logging.getLogger(__name__)
 
     main()

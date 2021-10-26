@@ -12,5 +12,5 @@ def add_notifier_webhook(name: str, url: str) -> None:
 
 
 def delete_notifier_webhook(name: str) -> None:
-    requests.delete(url=NOTIFIER_URL, params={"name": name})
+    requests.delete(url=NOTIFIER_URL, params={'name': name})
     logging.info(f'Notifier webhook with name={name} deleted successfully')
