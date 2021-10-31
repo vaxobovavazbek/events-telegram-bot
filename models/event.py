@@ -11,4 +11,4 @@ class Event:
         return cls(raw['description'], raw['eventTime'])
 
     def __str__(self) -> str:
-        return f'Event {self.description} happening today at {self.event_time.time().hour}:{self.event_time.time().minute}'
+        return f'Event {self.description} happening today at {self.event_time.strftime("%H:%M")}'
