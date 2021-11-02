@@ -7,9 +7,10 @@ BOT_TOKEN = os.getenv('BOT_TOKEN')
 UPDATE_MODE = os.getenv('UPDATE_MODE', 'polling')
 LOG_LEVEL = os.getenv('LOG_LEVEL', 'INFO').upper()
 
-# webhook settings
+# web settings
 BOT_WEBHOOK_PATH = f'/{BOT_TOKEN}'
 BOT_WEBHOOK_URL = f'{HOST}{BOT_WEBHOOK_PATH}'
+PING_PATH = '/v1/ping'
 
 # mongodb settings
 DATABASE_NAME = os.getenv('DATABASE_NAME', 'eventsNotifier')

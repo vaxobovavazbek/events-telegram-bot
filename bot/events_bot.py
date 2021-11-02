@@ -56,9 +56,19 @@ def unsubscribe_handler(message: Message) -> None:
     bot.reply_to(message, text='You have been unsubscribed!')
 
 
+@bot.message_handler(commands=['ping'])
+def ping_handler(message: Message) -> None:
+    bot.reply_to(message, text='I\'m alive!')
+
+
 @bot.message_handler(func=lambda message: True, content_types=['text'])
 def echo_handler(message: Message):
     bot.reply_to(message, text=message.text)
+
+
+@server.route(settings.PING_PATH, methods=['GET'])
+def ping():
+    return {'status': 'UP'}, 200
 
 
 @server.route(settings.BOT_WEBHOOK_PATH, methods=['POST'])
