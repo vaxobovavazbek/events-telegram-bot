@@ -2,17 +2,16 @@ import logging
 import logging.config
 
 import telebot
-from flask import Flask, request, jsonify, make_response, Response
+from flask import Flask, request
 from telebot.types import Message
 
-from bot.settings import LOG_LEVEL, BOT_TOKEN, UPDATE_MODE, PORT, BOT_WEBHOOK_URL, BOT_WEBHOOK_PATH, \
-    NOTIFIER_WEBHOOK_PATH, NOTIFIER_WEBHOOK_URL
+import bot.settings as settings
 from bot.utils import get_display_name
 from database.users_database import retrieve_all_active_users, add_user, remove_user
 from models.event import Event
 from notifier import notifier_api
 
-bot = telebot.TeleBot(BOT_TOKEN)
+bot = telebot.TeleBot(settings.BOT_TOKEN)
 server = Flask(__name__)
 
 WELCOME_MESSAGE = '''Events Notifier Bot -
@@ -59,10 +58,10 @@ def unsubscribe_handler(message: Message) -> None:
 
 @bot.message_handler(func=lambda message: True, content_types=['text'])
 def echo_handler(message: Message):
-    bot.reply_to(message, message.text)
+    bot.reply_to(message, text=message.text)
 
 
-@server.route(BOT_WEBHOOK_PATH, methods=['POST'])
+@server.route(settings.BOT_WEBHOOK_PATH, methods=['POST'])
 def bot_webhook():
     json_string = request.get_data().decode('utf-8')
     update = telebot.types.Update.de_json(json_string)
@@ -70,14 +69,14 @@ def bot_webhook():
     return '!', 200
 
 
-@server.route(NOTIFIER_WEBHOOK_PATH, methods=['POST'])
-def notify_webhook() -> Response:
+@server.route(settings.NOTIFIER_WEBHOOK_PATH, methods=['POST'])
+def notify_webhook():
     data = request.get_json()
     events = list(map(lambda raw_event: Event.from_raw(raw_event), data))
     logging.info(f'Handling notification for {len(events)} events')
     for event in events:
         notify_users(event)
-    return make_response(jsonify({}, 200))
+    return {}, 200
 
 
 def notify_users(event_data: str) -> None:
@@ -89,17 +88,17 @@ def notify_users(event_data: str) -> None:
 
 def register_notifier_webhook():
     logging.info('Registering notifier webhook')
-    notifier_api.add_notifier_webhook(name='events_bot', url=NOTIFIER_WEBHOOK_URL)
+    notifier_api.add_notifier_webhook(name='events_bot', url=settings.NOTIFIER_WEBHOOK_URL)
 
 
 def main():
     register_notifier_webhook()
 
-    if UPDATE_MODE == 'webhook':
+    if settings.UPDATE_MODE == 'webhook':
         bot.remove_webhook()
-        bot.set_webhook(url=BOT_WEBHOOK_URL)
-        server.run(host='0.0.0.0', port=PORT)
-        logging.info(f'Start webhook mode on port {PORT}')
+        bot.set_webhook(url=settings.BOT_WEBHOOK_URL)
+        server.run(host='0.0.0.0', port=settings.PORT)
+        logging.info(f'Start webhook mode on port {settings.PORT}')
     else:
         logging.info(f'Start polling mode')
         if bot.get_webhook_info().url:
@@ -108,7 +107,7 @@ def main():
 
 
 if __name__ == '__main__':
-    logging.basicConfig(format='%(asctime)s - %(levelname)s - %(message)s', level=LOG_LEVEL)
+    logging.basicConfig(format='%(asctime)s - %(levelname)s - %(message)s', level=settings.LOG_LEVEL)
     logger = logging.getLogger(__name__)
 
     main()
