@@ -3,56 +3,106 @@ import logging.config
 
 import telebot
 from flask import Flask, request
-from telebot.types import Message
+from telebot.types import Message, InlineKeyboardMarkup, InlineKeyboardButton, CallbackQuery
 
+import bot.constants as constants
 import bot.settings as settings
-from bot.utils import get_display_name
-from database.users_database import retrieve_all_active_users, add_user, remove_user
+import bot.utils as utils
+from database import users_database
 from models.event import Event
 from notifier import notifier_api
 
 bot = telebot.TeleBot(settings.BOT_TOKEN)
 server = Flask(__name__)
 
-WELCOME_MESSAGE = '''Events Notifier Bot -
 
-The bot that will notify you of upcoming events in your favorite stadiums or venues.
+def start_keyboard() -> InlineKeyboardMarkup:
+    markup = InlineKeyboardMarkup()
+    markup.row_width = 1
+    markup.add(
+        InlineKeyboardButton(text='Subscribe to updates', callback_data=constants.SUBSCRIBE_CALLBACK),
+        InlineKeyboardButton(text='Unsubscribe from updates', callback_data=constants.UNSUBSCRIBE_CALLBACK),
+        InlineKeyboardButton(text='Help', callback_data=constants.HELP_CALLBACK)
+    )
+    return markup
 
-How to use the bot: 
 
-Use the /subscribe command to subscribe to updates.
-Use the /unsubscribe command to unsubscribe from updates.
-Use the /help command to show this help message.
+def venues_keyboard(sub: bool) -> InlineKeyboardMarkup:
+    markup = InlineKeyboardMarkup()
+    markup.row_width = 1
+    callback_data = constants.CB_VENUE_SAMMY
+    if not sub:
+        callback_data = callback_data + constants.UNSUB
+    markup.add(InlineKeyboardButton('Sammy Ofer', callback_data=callback_data))
+    return markup
 
-For any questions or issues, please go to - https://github.com/oriash93/events-telegram-bot'''
+
+@bot.callback_query_handler(func=lambda callback_query: callback_query.data.startswith('START'))
+def start_callback_handler(callback_query: CallbackQuery):
+    if callback_query.data == constants.SUBSCRIBE_CALLBACK:
+        subscribe_handler(callback_query.message)
+
+    elif callback_query.data == constants.UNSUBSCRIBE_CALLBACK:
+        unsubscribe_handler(callback_query.message)
+
+    elif callback_query.data == constants.HELP_CALLBACK:
+        help_handler(message=callback_query.message)
+
+    else:
+        raise ValueError
+
+    bot.answer_callback_query(callback_query_id=callback_query.id)
+
+
+@bot.callback_query_handler(func=lambda callback_query: callback_query.data.startswith('VENUE'))
+def venue_callback_handler(callback_query: CallbackQuery):
+    venue = callback_query.data.split('_')[1]
+    if constants.UNSUB in callback_query.data:
+        unsubscribe_user_from_venue(callback_query.message, venue=venue)
+    else:
+        subscribe_user_to_venue(callback_query.message, venue=venue)
+
+    bot.answer_callback_query(callback_query_id=callback_query.id)
 
 
 @bot.message_handler(commands=['start'])
 def start_handler(message: Message) -> None:
-    bot.reply_to(message, text=f'Hey, please use the /help command :)')
+    bot.send_message(message.chat.id, 'What would you like to do?', reply_markup=start_keyboard())
 
 
 @bot.message_handler(commands=['help'])
 def help_handler(message: Message) -> None:
-    bot.reply_to(message, text=WELCOME_MESSAGE, disable_web_page_preview=True)
+    bot.reply_to(message, text=constants.WELCOME_MESSAGE, disable_web_page_preview=True)
 
 
 @bot.message_handler(commands=['subscribe'])
 def subscribe_handler(message: Message) -> None:
-    user_id = str(message.from_user.id)
-    logging.info(f'Subscribing user with id={user_id}')
-    add_user(user_id=user_id, username=message.from_user.username,
-             first_name=message.from_user.first_name, last_name=message.from_user.last_name)
-    logging.info(f'User with id={user_id} subscribed successfully')
+    bot.send_message(message.chat.id, 'Choose a venue to subscribe', reply_markup=venues_keyboard(sub=True))
+
+
+def subscribe_user_to_venue(message: Message, venue: str):
+    user_id = str(message.chat.id)
+    logging.info(f'Subscribing user with id={user_id} to venue={venue}')
+    if users_database.user_exists(user_id=user_id):
+        users_database.add_venue_to_user(user_id=user_id, venue=venue)
+    else:
+        users_database.add_user(user_id=user_id, username=message.chat.username,
+                                first_name=message.chat.first_name, last_name=message.chat.last_name,
+                                venue=venue)
+    logging.info(f'User with id={user_id} subscribed successfully to venue={venue}')
     bot.reply_to(message, text='You have been subscribed!')
 
 
 @bot.message_handler(commands=['unsubscribe'])
 def unsubscribe_handler(message: Message) -> None:
-    user_id = str(message.from_user.id)
-    logging.info(f'Unsubscribing user with id={user_id}')
-    remove_user(user_id)
-    logging.info(f'User with id={user_id} unsubscribed successfully')
+    bot.send_message(message.chat.id, 'Choose a venue to unsubscribe', reply_markup=venues_keyboard(sub=False))
+
+
+def unsubscribe_user_from_venue(message: Message, venue: str):
+    user_id = str(message.chat.id)
+    logging.info(f'Unsubscribing user with id={user_id} from venue={venue}')
+    users_database.remove_venue_from_user(user_id=user_id, venue=venue)
+    logging.info(f'User with id={user_id} unsubscribed successfully from venue={venue}')
     bot.reply_to(message, text='You have been unsubscribed!')
 
 
@@ -90,10 +140,10 @@ def notify_webhook():
 
 
 def notify_users(event_data: str) -> None:
-    users = retrieve_all_active_users()
+    users = users_database.retrieve_all_active_users()
     logging.info(f'Notifying {len(list(users))} active users')
     for user in users:
-        bot.send_message(chat_id=user.user_id, text=f'Hey {get_display_name(user)}, {event_data}')
+        bot.send_message(chat_id=user.user_id, text=f'Hey {utils.get_display_name(user)}, {event_data}')
 
 
 def register_notifier_webhook():
