@@ -6,5 +6,5 @@ class User(Document):
     username = StringField(null=True)
     first_name = StringField(null=True)
     last_name = StringField(null=True)
-    venues = ListField(StringField(), null=True)
+    venues = ListField(StringField())
     is_active = BooleanField(default=True)
