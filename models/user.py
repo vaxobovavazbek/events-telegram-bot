@@ -1,4 +1,4 @@
-from mongoengine import Document, StringField, BooleanField
+from mongoengine import Document, StringField, BooleanField, ListField
 
 
 class User(Document):
@@ -6,4 +6,5 @@ class User(Document):
     username = StringField(null=True)
     first_name = StringField(null=True)
     last_name = StringField(null=True)
+    venues = ListField(StringField())
     is_active = BooleanField(default=True)
