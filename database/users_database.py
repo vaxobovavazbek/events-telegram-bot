@@ -16,7 +16,8 @@ def add_user(user_id: str, username: str, first_name: str, last_name: str, venue
 
 
 def retrieve_users_by_venue(venue_id: str) -> List[User]:
-    return User.objects.filter(venues__in=[venue_id])
+    venue = venues.retrieve_venue_by_venue_id(venue_id=venue_id)
+    return User.objects.filter(venues__in=[venue])
 
 
 def retrieve_user_venues(user_id: str) -> List[Venue]:
