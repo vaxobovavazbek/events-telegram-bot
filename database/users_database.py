@@ -3,7 +3,9 @@ from typing import List
 from mongoengine import connect
 
 from bot.settings import MONGODB_URI
+from database import venues_database as venues
 from models.user import User
+from models.venue import Venue
 
 db = connect(host=MONGODB_URI)
 
@@ -17,15 +19,21 @@ def retrieve_users_by_venue(venue_id: str) -> List[User]:
     return User.objects.filter(venues__in=[venue_id])
 
 
+def retrieve_user_venues(user_id: str) -> List[Venue]:
+    return User.objects(user_id=user_id).get().venues
+
+
 def user_exists(user_id: str) -> bool:
     return User.objects(user_id=user_id).count() == 1
 
 
 def add_venue_to_user(user_id: str, venue_id: str) -> None:
     user = User.objects(user_id=user_id).get()
-    user.update(add_to_set__venues=venue_id)
+    venue = venues.retrieve_venue_by_venue_id(venue_id=venue_id)
+    user.update(add_to_set__venues=venue)
 
 
 def remove_venue_from_user(user_id: str, venue_id: str) -> None:
     user = User.objects(user_id=user_id).get()
-    user.update(pull__venues=venue_id)
+    venue = venues.retrieve_venue_by_venue_id(venue_id=venue_id)
+    user.update(pull__venues=venue)

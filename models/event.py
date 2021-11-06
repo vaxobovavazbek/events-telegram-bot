@@ -7,7 +7,7 @@ class Event:
     def __init__(self, description: str, venue_id: str, event_time: str):
         self.description = description
         self.venue_id = venue_id
-        self.venue_display_name = venues.retrieve_display_name_by_id(self.venue_id)
+        self.venue_display_name = venues.retrieve_display_name_by_venue_id(self.venue_id)
         self.event_time = datetime.fromisoformat(event_time)
 
     @classmethod

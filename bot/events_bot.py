@@ -1,5 +1,6 @@
 import logging
 import logging.config
+from typing import List
 
 import telebot
 from flask import Flask, request
@@ -29,21 +30,21 @@ def start_keyboard() -> InlineKeyboardMarkup:
     return markup
 
 
-def build_venue_callback_data(venue: Venue, sub: bool) -> str:
+def build_venues_keyboard(subscribe: bool, venue_list: List[Venue] = None) -> InlineKeyboardMarkup:
+    markup = InlineKeyboardMarkup()
+    markup.row_width = 1
+    for venue in venue_list:
+        markup.add(build_venue_keyboard_button(subscribe, venue))
+    return markup
+
+
+def build_venue_keyboard_button(subscribe: bool, venue: Venue):
     callback_data = f'{constants.VENUE_PREFIX}_{venue.venue_id}_'
-    if sub:
+    if subscribe:
         callback_data = callback_data + constants.SUBSCRIBE_POSTFIX
     else:
         callback_data = callback_data + constants.UNSUBSCRIBE_POSTFIX
-    return callback_data
-
-
-def venues_keyboard(sub: bool) -> InlineKeyboardMarkup:
-    markup = InlineKeyboardMarkup()
-    markup.row_width = 1
-    for venue in venues.retrieve_all_venues():
-        markup.add(InlineKeyboardButton(venue.display_name, callback_data=build_venue_callback_data(venue, sub)))
-    return markup
+    return InlineKeyboardButton(venue.display_name, callback_data=callback_data)
 
 
 @bot.callback_query_handler(func=lambda callback_query: callback_query.data.startswith(constants.START_PREFIX))
@@ -85,7 +86,8 @@ def help_handler(message: Message) -> None:
 
 @bot.message_handler(commands=['subscribe'])
 def subscribe_handler(message: Message) -> None:
-    bot.send_message(message.chat.id, 'Choose a venue to subscribe', reply_markup=venues_keyboard(sub=True))
+    bot.send_message(message.chat.id, text='Choose a venue to subscribe',
+                     reply_markup=build_venues_keyboard(subscribe=True, venue_list=venues.retrieve_all_venues()))
 
 
 def subscribe_user_to_venue(message: Message, venue_id: str) -> None:
@@ -103,7 +105,13 @@ def subscribe_user_to_venue(message: Message, venue_id: str) -> None:
 
 @bot.message_handler(commands=['unsubscribe'])
 def unsubscribe_handler(message: Message) -> None:
-    bot.send_message(message.chat.id, 'Choose a venue to unsubscribe', reply_markup=venues_keyboard(sub=False))
+    user_id = str(message.chat.id)
+    user_venues = users.retrieve_user_venues(user_id=user_id)
+    if user_venues is None or len(user_venues) == 0:
+        bot.send_message(user_id, text='You\'re not subscribed to any updates')
+    else:
+        bot.send_message(user_id, text='Choose a venue to unsubscribe',
+                         reply_markup=build_venues_keyboard(subscribe=False, venue_list=user_venues))
 
 
 def unsubscribe_user_from_venue(message: Message, venue_id: str) -> None:
@@ -134,7 +142,7 @@ def bot_webhook():
     json_string = request.get_data().decode('utf-8')
     update = telebot.types.Update.de_json(json_string)
     bot.process_new_updates([update])
-    return '!', 200
+    return {}, 200
 
 
 @server.route(settings.NOTIFIER_WEBHOOK_PATH, methods=['POST'])
