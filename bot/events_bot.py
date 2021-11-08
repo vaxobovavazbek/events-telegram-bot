@@ -177,7 +177,7 @@ def ping_handler(message: Message) -> None:
 
 @bot.message_handler(func=lambda message: True, content_types=['text'])
 def echo_handler(message: Message) -> None:
-    bot.reply_to(message, text=message.text)
+    bot.send_message(chat_id=message.chat.id, text='Sorry, I don\'t understand')
 
 
 @server.route(settings.PING_PATH, methods=['GET'])
