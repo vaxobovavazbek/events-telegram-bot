@@ -1,5 +1,6 @@
 from mongoengine import Document, StringField, ReferenceField, ListField
 
+from bot import settings
 from models.venue import Venue
 
 
@@ -9,3 +10,4 @@ class User(Document):
     first_name = StringField(null=True)
     last_name = StringField(null=True)
     venues = ListField(ReferenceField(Venue))
+    language = StringField(default=settings.DEFAULT_LANGUAGE)

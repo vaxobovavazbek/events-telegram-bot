@@ -38,3 +38,8 @@ def remove_venue_from_user(user_id: str, venue_id: str) -> None:
     user = User.objects(user_id=user_id).get()
     venue = venues.retrieve_venue_by_venue_id(venue_id=venue_id)
     user.update(pull__venues=venue)
+
+
+def update_user_language(user_id: str, language: str) -> None:
+    user = User.objects(user_id=user_id).get()
+    user.update(language=language)

@@ -19,17 +19,6 @@ bot = telebot.TeleBot(settings.BOT_TOKEN)
 server = Flask(__name__)
 
 
-def start_keyboard() -> InlineKeyboardMarkup:
-    markup = InlineKeyboardMarkup()
-    markup.row_width = 1
-    markup.add(
-        InlineKeyboardButton(text='Subscribe to updates', callback_data=constants.SUBSCRIBE_CALLBACK),
-        InlineKeyboardButton(text='Unsubscribe from updates', callback_data=constants.UNSUBSCRIBE_CALLBACK),
-        InlineKeyboardButton(text='Help', callback_data=constants.HELP_CALLBACK)
-    )
-    return markup
-
-
 def build_venues_keyboard(subscribe: bool, venue_list: List[Venue] = None) -> InlineKeyboardMarkup:
     markup = InlineKeyboardMarkup()
     markup.row_width = 1
@@ -47,14 +36,39 @@ def build_venue_keyboard_button(subscribe: bool, venue: Venue):
     return InlineKeyboardButton(venue.display_name, callback_data=callback_data)
 
 
-@bot.callback_query_handler(func=lambda callback_query: callback_query.data.startswith(constants.START_PREFIX))
-def start_callback_handler(callback_query: CallbackQuery) -> None:
+@bot.callback_query_handler(func=lambda callback_query: callback_query.data.startswith(constants.MENU_PREFIX))
+def main_menu_callback_handler(callback_query: CallbackQuery) -> None:
     if callback_query.data == constants.SUBSCRIBE_CALLBACK:
-        subscribe_handler(callback_query.message)
+        subscribe_handler(message=callback_query.message)
     elif callback_query.data == constants.UNSUBSCRIBE_CALLBACK:
-        unsubscribe_handler(callback_query.message)
+        unsubscribe_handler(message=callback_query.message)
     elif callback_query.data == constants.HELP_CALLBACK:
         help_handler(message=callback_query.message)
+    elif callback_query.data == constants.SETTINGS_CALLBACK:
+        settings_handler(message=callback_query.message)
+    else:
+        raise ValueError
+
+    bot.answer_callback_query(callback_query_id=callback_query.id)
+
+
+@bot.callback_query_handler(func=lambda callback_query: callback_query.data.startswith(constants.SETTINGS_PREFIX))
+def settings_callback_handler(callback_query: CallbackQuery) -> None:
+    if callback_query.data == constants.LANGUAGE_CALLBACK:
+        language_handler(message=callback_query.message)
+    else:
+        raise ValueError
+
+    bot.answer_callback_query(callback_query_id=callback_query.id)
+
+
+@bot.callback_query_handler(func=lambda callback_query: callback_query.data.startswith(constants.LANGUAGE_PREFIX))
+def language_callback_handler(callback_query: CallbackQuery) -> None:
+    prefix, language = callback_query.data.split('_', maxsplit=1)
+    if language in settings.SUPPORTED_LANGUAGES:
+        users.update_user_language(str(callback_query.message.chat.id), language)
+        bot.edit_message_text(chat_id=callback_query.message.chat.id, message_id=callback_query.message.id,
+                              text='Language updated')
     else:
         raise ValueError
 
@@ -74,20 +88,41 @@ def venue_callback_handler(callback_query: CallbackQuery) -> None:
     bot.answer_callback_query(callback_query_id=callback_query.id)
 
 
-@bot.message_handler(commands=['start'])
-def start_handler(message: Message) -> None:
-    bot.send_message(message.chat.id, 'What would you like to do?', reply_markup=start_keyboard())
+@bot.message_handler(commands=['start', 'menu'])
+def main_menu_handler(message: Message) -> None:
+    keyboard = InlineKeyboardMarkup()
+    keyboard.row_width = 1
+    keyboard.add(
+        InlineKeyboardButton(text='Subscribe to updates', callback_data=constants.SUBSCRIBE_CALLBACK),
+        InlineKeyboardButton(text='Unsubscribe from updates', callback_data=constants.UNSUBSCRIBE_CALLBACK),
+        InlineKeyboardButton(text='Settings', callback_data=constants.SETTINGS_CALLBACK),
+        InlineKeyboardButton(text='Help', callback_data=constants.HELP_CALLBACK)
+    )
+    bot.send_message(message.chat.id, 'What would you like to do?', reply_markup=keyboard)
+
+
+@bot.message_handler(commands=['settings'])
+def settings_handler(message: Message) -> None:
+    keyboard = InlineKeyboardMarkup()
+    keyboard.row_width = 1
+    keyboard.add(
+        InlineKeyboardButton(text='Language', callback_data=constants.LANGUAGE_CALLBACK),
+    )
+    bot.edit_message_text(chat_id=message.chat.id, message_id=message.id,
+                          text='Choose a setting', reply_markup=keyboard)
 
 
 @bot.message_handler(commands=['help'])
 def help_handler(message: Message) -> None:
-    bot.reply_to(message, text=constants.WELCOME_MESSAGE, disable_web_page_preview=True)
+    bot.send_message(chat_id=message.chat.id,
+                     text=constants.WELCOME_MESSAGE, disable_web_page_preview=True)
 
 
 @bot.message_handler(commands=['subscribe'])
 def subscribe_handler(message: Message) -> None:
-    bot.send_message(message.chat.id, text='Choose a venue to subscribe',
-                     reply_markup=build_venues_keyboard(subscribe=True, venue_list=venues.retrieve_all_venues()))
+    bot.edit_message_text(chat_id=message.chat.id, message_id=message.id,
+                          text='Choose a venue to subscribe',
+                          reply_markup=build_venues_keyboard(subscribe=True, venue_list=venues.retrieve_all_venues()))
 
 
 def subscribe_user_to_venue(message: Message, venue_id: str) -> None:
@@ -100,7 +135,7 @@ def subscribe_user_to_venue(message: Message, venue_id: str) -> None:
                        first_name=message.chat.first_name, last_name=message.chat.last_name,
                        venue_id=venue_id)
     logging.info(f'User with id={user_id} subscribed successfully to venue={venue_id}')
-    bot.reply_to(message, text='You have been subscribed!')
+    bot.send_message(chat_id=message.chat.id, text='You have been subscribed!')
 
 
 @bot.message_handler(commands=['unsubscribe'])
@@ -108,10 +143,12 @@ def unsubscribe_handler(message: Message) -> None:
     user_id = str(message.chat.id)
     user_venues = users.retrieve_user_venues(user_id=user_id)
     if user_venues is None or len(user_venues) == 0:
-        bot.send_message(user_id, text='You\'re not subscribed to any updates')
+        bot.edit_message_text(chat_id=message.chat.id, message_id=message.id,
+                              text='You\'re not subscribed to any updates')
     else:
-        bot.send_message(user_id, text='Choose a venue to unsubscribe',
-                         reply_markup=build_venues_keyboard(subscribe=False, venue_list=user_venues))
+        bot.edit_message_text(chat_id=message.chat.id, message_id=message.id,
+                              text='Choose a venue to unsubscribe from',
+                              reply_markup=build_venues_keyboard(subscribe=False, venue_list=user_venues))
 
 
 def unsubscribe_user_from_venue(message: Message, venue_id: str) -> None:
@@ -119,17 +156,28 @@ def unsubscribe_user_from_venue(message: Message, venue_id: str) -> None:
     logging.info(f'Unsubscribing user with id={user_id} from venue={venue_id}')
     users.remove_venue_from_user(user_id=user_id, venue_id=venue_id)
     logging.info(f'User with id={user_id} unsubscribed successfully from venue={venue_id}')
-    bot.reply_to(message, text='You have been unsubscribed!')
+    bot.send_message(chat_id=message.chat.id, text='You have been unsubscribed!')
+
+
+def language_handler(message: Message) -> None:
+    keyboard = InlineKeyboardMarkup()
+    keyboard.row_width = 1
+    keyboard.add(
+        InlineKeyboardButton(text='עברית', callback_data=constants.HEBREW_CALLBACK),
+        InlineKeyboardButton(text='English', callback_data=constants.ENGLISH_CALLBACK),
+    )
+    bot.edit_message_text(chat_id=message.chat.id, message_id=message.id,
+                          text='Choose a language', reply_markup=keyboard)
 
 
 @bot.message_handler(commands=['ping'])
 def ping_handler(message: Message) -> None:
-    bot.reply_to(message, text='I\'m alive!')
+    bot.send_message(chat_id=message.chat.id, text='I\'m alive!')
 
 
 @bot.message_handler(func=lambda message: True, content_types=['text'])
 def echo_handler(message: Message) -> None:
-    bot.reply_to(message, text=message.text)
+    bot.send_message(chat_id=message.chat.id, text='Sorry, I don\'t understand')
 
 
 @server.route(settings.PING_PATH, methods=['GET'])
