@@ -7,7 +7,7 @@ from bot.settings import NOTIFIER_URL
 from models.webhook import Webhook
 
 http = requests.Session()
-http.mount("http", HTTPAdapter(max_retries=Retry(total=3, backoff_factor=1)))
+http.mount('http', HTTPAdapter(max_retries=Retry(total=3, backoff_factor=1)))
 
 
 def add_notifier_webhook(name: str, url: str) -> None:
