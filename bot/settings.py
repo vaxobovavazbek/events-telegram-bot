@@ -6,6 +6,7 @@ HOST = os.getenv('HOST', f'http://localhost:{PORT}')
 BOT_TOKEN = os.getenv('BOT_TOKEN')
 UPDATE_MODE = os.getenv('UPDATE_MODE', 'polling')
 LOG_LEVEL = os.getenv('LOG_LEVEL', 'INFO').upper()
+LOG_FORMAT = '%(asctime)s - %(levelname)s - %(message)s'
 
 # web settings
 BOT_WEBHOOK_PATH = f'/{BOT_TOKEN}'

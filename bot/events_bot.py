@@ -184,7 +184,7 @@ def main():
 
 
 if __name__ == '__main__':
-    logging.basicConfig(format='%(asctime)s - %(levelname)s - %(message)s', level=settings.LOG_LEVEL)
+    logging.basicConfig(format=settings.LOG_FORMAT, level=settings.LOG_LEVEL)
     logger = logging.getLogger(__name__)
 
     main()
