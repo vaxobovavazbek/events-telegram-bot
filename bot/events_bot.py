@@ -43,6 +43,15 @@ def build_venue_keyboard_button(subscribe: bool, venue: Venue):
     return InlineKeyboardButton(venue.display_name, callback_data=callback_data)
 
 
+def build_language_keyboard() -> InlineKeyboardMarkup:
+    markup = InlineKeyboardMarkup()
+    markup.row_width = 1
+    for language_code, display_name in settings.SUPPORTED_LANGUAGES.items():
+        callback_data = f'{constants.LANGUAGE_PREFIX}_{language_code}'
+        markup.add(InlineKeyboardButton(display_name, callback_data=callback_data))
+    return markup
+
+
 @bot.callback_query_handler(func=lambda callback_query: callback_query.data.startswith(constants.MENU_PREFIX))
 def main_menu_callback_handler(callback_query: CallbackQuery) -> None:
     if callback_query.data == constants.SUBSCRIBE_CALLBACK:
@@ -71,9 +80,9 @@ def settings_callback_handler(callback_query: CallbackQuery) -> None:
 
 @bot.callback_query_handler(func=lambda callback_query: callback_query.data.startswith(constants.LANGUAGE_PREFIX))
 def language_callback_handler(callback_query: CallbackQuery) -> None:
-    prefix, language = callback_query.data.split('_', maxsplit=1)
-    if language in settings.SUPPORTED_LANGUAGES:
-        users.update_user_language(str(callback_query.message.chat.id), language)
+    prefix, language_code = callback_query.data.split('_', maxsplit=1)
+    if language_code in settings.SUPPORTED_LANGUAGES.keys():
+        users.update_user_language(str(callback_query.message.chat.id), language_code)
         send_message(message=callback_query.message, text='Language settings updated')
     else:
         raise ValueError
@@ -161,13 +170,7 @@ def unsubscribe_user_from_venue(message: Message, venue_id: str) -> None:
 
 
 def language_handler(message: Message) -> None:
-    keyboard = InlineKeyboardMarkup()
-    keyboard.row_width = 1
-    keyboard.add(
-        InlineKeyboardButton(text='עברית', callback_data=constants.HEBREW_CALLBACK),
-        InlineKeyboardButton(text='English', callback_data=constants.ENGLISH_CALLBACK),
-    )
-    send_message(message=message, text='Choose a language', reply_markup=keyboard)
+    send_message(message=message, text='Choose a language', reply_markup=build_language_keyboard())
 
 
 @bot.message_handler(commands=['ping'])
