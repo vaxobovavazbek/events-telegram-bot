@@ -63,7 +63,7 @@ def main_menu_callback_handler(callback_query: CallbackQuery) -> None:
     elif callback_query.data == constants.SETTINGS_CALLBACK:
         settings_handler(message=callback_query.message)
     else:
-        raise ValueError
+        raise Warning(f'Failed to handle {callback_query.data} callback')
 
     bot.answer_callback_query(callback_query_id=callback_query.id)
 
@@ -73,7 +73,7 @@ def settings_callback_handler(callback_query: CallbackQuery) -> None:
     if callback_query.data == constants.LANGUAGE_CALLBACK:
         language_handler(message=callback_query.message)
     else:
-        raise ValueError
+        raise Warning(f'Failed to handle {callback_query.data} callback')
 
     bot.answer_callback_query(callback_query_id=callback_query.id)
 
@@ -85,7 +85,7 @@ def language_callback_handler(callback_query: CallbackQuery) -> None:
         users.update_user_language(str(callback_query.message.chat.id), language_code)
         send_message(message=callback_query.message, text='Language settings updated')
     else:
-        raise ValueError
+        raise Warning(f'Language {language_code} not supported')
 
     bot.answer_callback_query(callback_query_id=callback_query.id)
 
@@ -98,7 +98,7 @@ def venue_callback_handler(callback_query: CallbackQuery) -> None:
     elif subscription == constants.UNSUBSCRIBE_POSTFIX:
         unsubscribe_user_from_venue(callback_query.message, venue_id=venue_id)
     else:
-        raise ValueError
+        raise Warning(f'Failed to handle {callback_query.data} callback')
 
     bot.answer_callback_query(callback_query_id=callback_query.id)
 
