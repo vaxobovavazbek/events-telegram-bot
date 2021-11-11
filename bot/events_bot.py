@@ -8,7 +8,6 @@ from telebot.types import Message, InlineKeyboardMarkup, InlineKeyboardButton, C
 
 import bot.constants as constants
 import bot.settings as settings
-import bot.utils as utils
 import database.users_database as users
 import database.venues_database as venues
 from models.event import Event
@@ -211,7 +210,7 @@ def notify_users(event: Event) -> None:
     venue_users = users.retrieve_users_by_venue(event.venue_id)
     logging.info(f'Notifying {len(list(venue_users))} users')
     for user in venue_users:
-        bot.send_message(chat_id=user.user_id, text=f'Hey {utils.get_display_name(user)}, {event_data}')  # TODO
+        bot.send_message(chat_id=user.user_id, text=event_data)  # TODO
 
 
 def register_notifier_webhook() -> None:
