@@ -2,9 +2,9 @@ import logging
 import logging.config
 from typing import List
 
-import telebot
 from flask import Flask, request
-from telebot.types import Message, InlineKeyboardMarkup, InlineKeyboardButton, CallbackQuery
+from telebot import TeleBot
+from telebot.types import Message, InlineKeyboardMarkup, InlineKeyboardButton, CallbackQuery, Update
 
 import bot.constants as constants
 import bot.settings as settings
@@ -14,7 +14,7 @@ from models.event import Event
 from models.venue import Venue
 from notifier import notifier_api
 
-bot = telebot.TeleBot(settings.BOT_TOKEN)
+bot = TeleBot(settings.BOT_TOKEN)
 server = Flask(__name__)
 
 
@@ -190,7 +190,7 @@ def ping():
 @server.route(settings.BOT_WEBHOOK_PATH, methods=['POST'])
 def bot_webhook():
     json_string = request.get_data().decode('utf-8')
-    update = telebot.types.Update.de_json(json_string)
+    update = Update.de_json(json_string)
     bot.process_new_updates([update])
     return {}, 200
 
