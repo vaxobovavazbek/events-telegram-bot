@@ -1,5 +1,6 @@
 from datetime import datetime
 
+from bot.i18n_utils import translate as _
 from database import venues_database as venues
 
 
@@ -15,4 +16,4 @@ class Event:
         return cls(description=raw['description'], venue_id=raw['venue'], event_time=raw['eventTime'])
 
     def __str__(self) -> str:
-        return f'{self.venue_name}: Event {self.description} happening today at {self.event_time.strftime("%H:%M")}'
+        return _('event_format').format(_(self.venue_name), self.description, self.event_time.strftime("%H:%M"))

@@ -1,0 +1,24 @@
+{
+  "he": {
+    "What would you like to do?": "מה ברצונך לעשות?",
+    "Language settings updated": "הגדרות שפה עודכנו",
+    "Choose a setting": "איזו הגדרה ברצונך לשנות?",
+    "Choose a venue to subscribe": "בחר.י אצטדיון",
+    "You have been subscribed!": "נרשמת לעדכונים!",
+    "You're not subscribed to any updates": "לא קיים רישום לעדכונים",
+    "Choose a venue to unsubscribe from": "בחר.י אצטדיון",
+    "You have been unsubscribed!": "הסרת רישום לעדכונים!",
+    "Choose a language": "בחר.י שפה",
+    "I'm alive": "אני חי",
+    "Sorry, I don't understand": "סליחה, אינני מבין",
+    "Subscribe to updates": "רישום לעדכונים",
+    "Unsubscribe from updates": "הסרת רישום מעדכונים",
+    "Settings": "הגדרות",
+    "Help": "עזרה",
+    "Language": "שפה",
+    "event_format": "{}: אירוע {} היום בשעה {}",
+    "Bloomfield stadium": "אצטדיון בלומפילד",
+    "Sammy Ofer stadium": "אצטדיון סמי עופר",
+    "help_message": "הבוט שיודיע לך על אירועים קרובים באצטדיונים או במקומות המועדפים עליך.\n\nכיצד להשתמש בבוט:\n\nהשתמש.י בפקודה /start או /menu כדי להציג את התפריט הראשי.\nהשתמש.י בפקודה /subscribe כדי להירשם לעדכונים.\nהשתמש.י בפקודה /unsubscribe כדי לבטל את הרישום לעדכונים.\nהשתמש.י בפקודה /settings כדי לשנות את הגדרות המשתמש.\nהשתמש.י בפקודה /help כדי להציג הודעת עזרה זו.\n\nלכל שאלה או בעיה, תוכלו לבקר בכתובת - https://github.com/oriash93/events-telegram-bot"
+  }
+}
