@@ -27,7 +27,7 @@ def activate(locale):
 
 
 @bot.middleware_handler(update_types=['message'])
-def activate_language(bot_instance, message: Message):
+def activate_language(bot_instance: TeleBot, message: Message):
     user_id = str(message.chat.id)
     activate(users.retrieve_user_language(user_id))
 
@@ -251,7 +251,6 @@ def main():
 
 def _setup_logging() -> None:
     logging.basicConfig(format=settings.LOG_FORMAT, level=settings.LOG_LEVEL)
-    logger = logging.getLogger(__name__)
 
 
 def _setup_i18n() -> None:
