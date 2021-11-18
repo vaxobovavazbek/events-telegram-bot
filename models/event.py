@@ -16,4 +16,5 @@ class Event:
         return cls(description=raw['description'], venue_id=raw['venue'], event_time=raw['eventTime'])
 
     def __str__(self) -> str:
-        return _('event_format').format(_(self.venue_name), self.description, self.event_time.strftime("%H:%M"))
+        return _('event_notification_format',
+                 venue=_(self.venue_name), description=self.description, time=self.event_time.strftime("%H:%M"))

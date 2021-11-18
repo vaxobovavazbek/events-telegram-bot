@@ -16,7 +16,7 @@
     "Settings": "Settings",
     "Help": "Help",
     "Language": "Language",
-    "event_format": "{}: Event {} today at {}",
+    "event_notification_format": "%{venue}: %{description} - today at %{time}",
     "Bloomfield stadium": "Bloomfield stadium",
     "Sammy Ofer stadium": "Sammy Ofer stadium",
     "help_message": "Events Notifier Bot -\n\nThe bot that will notify you of upcoming events in your favorite stadiums or venues.\n\nHow to use the bot: \n\nUse the /start or /menu command to show the main menu.\nUse the /subscribe command to subscribe to updates.\nUse the /unsubscribe command to unsubscribe from updates.\nUse the /settings command to configure user settings.\nUse the /help command to show this help message.\n\nFor any questions or issues, please go to - https://github.com/oriash93/events-telegram-bot"

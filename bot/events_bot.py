@@ -93,13 +93,13 @@ def settings_callback_handler(callback_query: CallbackQuery) -> None:
 
 @bot.callback_query_handler(func=lambda callback_query: callback_query.data.startswith(constants.LANGUAGE_PREFIX))
 def language_callback_handler(callback_query: CallbackQuery) -> None:
-    prefix, language_code = callback_query.data.split('_', maxsplit=1)
-    if language_code in settings.SUPPORTED_LOCALES.keys():
-        users.update_user_language(str(callback_query.message.chat.id), language_code)
-        settings.CURRENT_LOCALE = language_code
+    prefix, locale = callback_query.data.split('_', maxsplit=1)
+    if locale in settings.SUPPORTED_LOCALES.keys():
+        users.update_user_language(str(callback_query.message.chat.id), locale)
+        settings.CURRENT_LOCALE = locale
         send_message(message=callback_query.message, text=_('Language settings updated'))
     else:
-        raise Warning(f'Language {language_code} not supported')
+        raise Warning(f'Language {locale} not supported')
 
     bot.answer_callback_query(callback_query_id=callback_query.id)
 
@@ -225,6 +225,7 @@ def notify_users(event: Event) -> None:
     venue_users = users.retrieve_users_by_venue(event.venue_id)
     logging.info(f'Notifying {len(list(venue_users))} users')
     for user in venue_users:
+        settings.CURRENT_LOCALE = user.language
         bot.send_message(chat_id=user.user_id, text=event_data)
 
 
