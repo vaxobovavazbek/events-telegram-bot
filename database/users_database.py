@@ -43,3 +43,7 @@ def remove_venue_from_user(user_id: str, venue_id: str) -> None:
 def update_user_language(user_id: str, language: str) -> None:
     user = User.objects(user_id=user_id).get()
     user.update(language=language)
+
+
+def retrieve_user_language(user_id: str) -> str:
+    return User.objects(user_id=user_id).get().language

@@ -2,20 +2,33 @@ import logging
 import logging.config
 from typing import List
 
+import i18n
 from flask import Flask, request
-from telebot import TeleBot
+from telebot import TeleBot, apihelper
 from telebot.types import Message, InlineKeyboardMarkup, InlineKeyboardButton, CallbackQuery, Update
 
 import bot.constants as constants
 import bot.settings as settings
 import database.users_database as users
 import database.venues_database as venues
+import notifier.notifier_api as notifier_api
 from models.event import Event
 from models.venue import Venue
-from notifier import notifier_api
+
+apihelper.ENABLE_MIDDLEWARE = True
 
 bot = TeleBot(settings.BOT_TOKEN)
 server = Flask(__name__)
+
+
+def activate(locale):
+    settings.CURRENT_LOCALE = locale
+
+
+@bot.middleware_handler(update_types=['message'])
+def activate_language(bot_instance, message: Message):
+    user_id = str(message.chat.id)
+    activate(users.retrieve_user_language(user_id))
 
 
 def send_message(message: Message, text: str, **kwargs) -> None:
@@ -45,7 +58,7 @@ def build_venue_keyboard_button(subscribe: bool, venue: Venue):
 def build_language_keyboard() -> InlineKeyboardMarkup:
     markup = InlineKeyboardMarkup()
     markup.row_width = 1
-    for language_code, display_name in settings.SUPPORTED_LANGUAGES.items():
+    for language_code, display_name in settings.SUPPORTED_LOCALES.items():
         callback_data = f'{constants.LANGUAGE_PREFIX}_{language_code}'
         markup.add(InlineKeyboardButton(display_name, callback_data=callback_data))
     return markup
@@ -80,9 +93,10 @@ def settings_callback_handler(callback_query: CallbackQuery) -> None:
 @bot.callback_query_handler(func=lambda callback_query: callback_query.data.startswith(constants.LANGUAGE_PREFIX))
 def language_callback_handler(callback_query: CallbackQuery) -> None:
     prefix, language_code = callback_query.data.split('_', maxsplit=1)
-    if language_code in settings.SUPPORTED_LANGUAGES.keys():
+    if language_code in settings.SUPPORTED_LOCALES.keys():
         users.update_user_language(str(callback_query.message.chat.id), language_code)
         send_message(message=callback_query.message, text='Language settings updated')
+        settings.CURRENT_LOCALE = language_code
     else:
         raise Warning(f'Language {language_code} not supported')
 
@@ -233,8 +247,19 @@ def main():
         bot.infinity_polling()
 
 
-if __name__ == '__main__':
+def _setup_logging() -> None:
     logging.basicConfig(format=settings.LOG_FORMAT, level=settings.LOG_LEVEL)
     logger = logging.getLogger(__name__)
+
+
+def _setup_i18n() -> None:
+    i18n.set('locale', settings.DEFAULT_LOCALE)
+    i18n.load_path.append('./locale/')
+    i18n.set('filename_format', '{locale}.{format}')
+
+
+if __name__ == '__main__':
+    _setup_logging()
+    _setup_i18n()
 
     main()
