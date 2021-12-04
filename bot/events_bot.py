@@ -48,12 +48,13 @@ def build_venues_keyboard(subscribe: bool, venue_list: List[Venue] = None) -> In
 
 
 def build_venue_keyboard_button(subscribe: bool, venue: Venue):
-    callback_data = f'{constants.VENUE_PREFIX}_{venue.venue_id}_'
+    callback_data = f'{constants.VENUE_PREFIX}'
     if subscribe:
-        callback_data = callback_data + constants.SUBSCRIBE_POSTFIX
+        callback_data = f'{callback_data}_{constants.SUBSCRIBE_POSTFIX}'
     else:
-        callback_data = callback_data + constants.UNSUBSCRIBE_POSTFIX
-    return InlineKeyboardButton(_(venue.display_name), callback_data=callback_data)
+        callback_data = f'{callback_data}_{constants.UNSUBSCRIBE_POSTFIX}'
+    callback_data = f'{callback_data}_{venue.venue_id}'
+    return InlineKeyboardButton(_(venue.venue_id), callback_data=callback_data)
 
 
 def build_language_keyboard() -> InlineKeyboardMarkup:
@@ -106,7 +107,7 @@ def language_callback_handler(callback_query: CallbackQuery) -> None:
 
 @bot.callback_query_handler(func=lambda callback_query: callback_query.data.startswith(constants.VENUE_PREFIX))
 def venue_callback_handler(callback_query: CallbackQuery) -> None:
-    prefix, venue_id, subscription = callback_query.data.split('_')
+    prefix, subscription, venue_id = callback_query.data.split('_', maxsplit=2)
     if subscription == constants.SUBSCRIBE_POSTFIX:
         subscribe_user_to_venue(callback_query.message, venue_id=venue_id)
     elif subscription == constants.UNSUBSCRIBE_POSTFIX:
