@@ -32,11 +32,11 @@ def activate_language(bot_instance: TeleBot, message: Message):
     activate(users.retrieve_user_language(user_id))
 
 
-def send_message(message: Message, text: str, **kwargs) -> None:
+def send_message(message: Message, **kwargs) -> None:
     if message.from_user.is_bot:
-        bot.edit_message_text(chat_id=message.chat.id, message_id=message.id, text=text, **kwargs)
+        bot.edit_message_text(chat_id=message.chat.id, message_id=message.id, **kwargs)
     else:
-        bot.send_message(chat_id=message.chat.id, text=text, **kwargs)
+        bot.send_message(chat_id=message.chat.id, **kwargs)
 
 
 def build_venues_keyboard(subscribe: bool, venue_list: List[Venue] = None) -> InlineKeyboardMarkup:
