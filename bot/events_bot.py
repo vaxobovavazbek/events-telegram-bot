@@ -2,27 +2,41 @@ import logging
 import logging.config
 from typing import List
 
+import i18n
 from flask import Flask, request
-from telebot import TeleBot
+from telebot import TeleBot, apihelper
 from telebot.types import Message, InlineKeyboardMarkup, InlineKeyboardButton, CallbackQuery, Update
 
 import bot.constants as constants
 import bot.settings as settings
 import database.users_database as users
 import database.venues_database as venues
+import notifier.notifier_api as notifier_api
+from bot.i18n_utils import translate as _
 from models.event import Event
 from models.venue import Venue
-from notifier import notifier_api
+
+apihelper.ENABLE_MIDDLEWARE = True
 
 bot = TeleBot(settings.BOT_TOKEN)
 server = Flask(__name__)
 
 
-def send_message(message: Message, text: str, **kwargs) -> None:
+def activate(locale):
+    settings.CURRENT_LOCALE = locale
+
+
+@bot.middleware_handler(update_types=['message'])
+def activate_language(bot_instance: TeleBot, message: Message):
+    user_id = str(message.chat.id)
+    activate(users.retrieve_user_language(user_id))
+
+
+def send_message(message: Message, **kwargs) -> None:
     if message.from_user.is_bot:
-        bot.edit_message_text(chat_id=message.chat.id, message_id=message.id, text=text, **kwargs)
+        bot.edit_message_text(chat_id=message.chat.id, message_id=message.id, **kwargs)
     else:
-        bot.send_message(chat_id=message.chat.id, text=text, **kwargs)
+        bot.send_message(chat_id=message.chat.id, **kwargs)
 
 
 def build_venues_keyboard(subscribe: bool, venue_list: List[Venue] = None) -> InlineKeyboardMarkup:
@@ -34,18 +48,19 @@ def build_venues_keyboard(subscribe: bool, venue_list: List[Venue] = None) -> In
 
 
 def build_venue_keyboard_button(subscribe: bool, venue: Venue):
-    callback_data = f'{constants.VENUE_PREFIX}_{venue.venue_id}_'
+    callback_data = f'{constants.VENUE_PREFIX}'
     if subscribe:
-        callback_data = callback_data + constants.SUBSCRIBE_POSTFIX
+        callback_data = f'{callback_data}_{constants.SUBSCRIBE_POSTFIX}'
     else:
-        callback_data = callback_data + constants.UNSUBSCRIBE_POSTFIX
-    return InlineKeyboardButton(venue.display_name, callback_data=callback_data)
+        callback_data = f'{callback_data}_{constants.UNSUBSCRIBE_POSTFIX}'
+    callback_data = f'{callback_data}_{venue.venue_id}'
+    return InlineKeyboardButton(_(venue.venue_id), callback_data=callback_data)
 
 
 def build_language_keyboard() -> InlineKeyboardMarkup:
     markup = InlineKeyboardMarkup()
     markup.row_width = 1
-    for language_code, display_name in settings.SUPPORTED_LANGUAGES.items():
+    for language_code, display_name in settings.SUPPORTED_LOCALES.items():
         callback_data = f'{constants.LANGUAGE_PREFIX}_{language_code}'
         markup.add(InlineKeyboardButton(display_name, callback_data=callback_data))
     return markup
@@ -79,19 +94,20 @@ def settings_callback_handler(callback_query: CallbackQuery) -> None:
 
 @bot.callback_query_handler(func=lambda callback_query: callback_query.data.startswith(constants.LANGUAGE_PREFIX))
 def language_callback_handler(callback_query: CallbackQuery) -> None:
-    prefix, language_code = callback_query.data.split('_', maxsplit=1)
-    if language_code in settings.SUPPORTED_LANGUAGES.keys():
-        users.update_user_language(str(callback_query.message.chat.id), language_code)
-        send_message(message=callback_query.message, text='Language settings updated')
+    prefix, locale = callback_query.data.split('_', maxsplit=1)
+    if locale in settings.SUPPORTED_LOCALES.keys():
+        users.update_user_language(str(callback_query.message.chat.id), locale)
+        settings.CURRENT_LOCALE = locale
+        send_message(message=callback_query.message, text=_('LANGUAGE_SETTINGS_UPDATED'))
     else:
-        raise Warning(f'Language {language_code} not supported')
+        raise Warning(f'Language {locale} not supported')
 
     bot.answer_callback_query(callback_query_id=callback_query.id)
 
 
 @bot.callback_query_handler(func=lambda callback_query: callback_query.data.startswith(constants.VENUE_PREFIX))
 def venue_callback_handler(callback_query: CallbackQuery) -> None:
-    prefix, venue_id, subscription = callback_query.data.split('_')
+    prefix, subscription, venue_id = callback_query.data.split('_', maxsplit=2)
     if subscription == constants.SUBSCRIBE_POSTFIX:
         subscribe_user_to_venue(callback_query.message, venue_id=venue_id)
     elif subscription == constants.UNSUBSCRIBE_POSTFIX:
@@ -107,12 +123,12 @@ def main_menu_handler(message: Message) -> None:
     keyboard = InlineKeyboardMarkup()
     keyboard.row_width = 1
     keyboard.add(
-        InlineKeyboardButton(text='Subscribe to updates', callback_data=constants.SUBSCRIBE_CALLBACK),
-        InlineKeyboardButton(text='Unsubscribe from updates', callback_data=constants.UNSUBSCRIBE_CALLBACK),
-        InlineKeyboardButton(text='Settings', callback_data=constants.SETTINGS_CALLBACK),
-        InlineKeyboardButton(text='Help', callback_data=constants.HELP_CALLBACK)
+        InlineKeyboardButton(text=_('SUBSCRIBE_MENU_ITEM'), callback_data=constants.SUBSCRIBE_CALLBACK),
+        InlineKeyboardButton(text=_('UNSUBSCRIBE_MENU_ITEM'), callback_data=constants.UNSUBSCRIBE_CALLBACK),
+        InlineKeyboardButton(text=_('SETTINGS_MENU_ITEM'), callback_data=constants.SETTINGS_CALLBACK),
+        InlineKeyboardButton(text=_('HELP_MENU_ITEM'), callback_data=constants.HELP_CALLBACK)
     )
-    send_message(message=message, text='What would you like to do?', reply_markup=keyboard)
+    send_message(message=message, text=_('MAIN_MENU_PROMPT'), reply_markup=keyboard)
 
 
 @bot.message_handler(commands=['settings'])
@@ -120,19 +136,19 @@ def settings_handler(message: Message) -> None:
     keyboard = InlineKeyboardMarkup()
     keyboard.row_width = 1
     keyboard.add(
-        InlineKeyboardButton(text='Language', callback_data=constants.LANGUAGE_CALLBACK),
+        InlineKeyboardButton(text=_('LANGUAGE_MENU_ITEM'), callback_data=constants.LANGUAGE_CALLBACK),
     )
-    send_message(message=message, text='Choose a setting', reply_markup=keyboard)
+    send_message(message=message, text=_('CHOOSE_SETTING'), reply_markup=keyboard)
 
 
 @bot.message_handler(commands=['help'])
 def help_handler(message: Message) -> None:
-    send_message(message=message, text=constants.WELCOME_MESSAGE, disable_web_page_preview=True)
+    send_message(message=message, text=_('HELP_MESSAGE'), disable_web_page_preview=True)
 
 
 @bot.message_handler(commands=['subscribe'])
 def subscribe_handler(message: Message) -> None:
-    send_message(message=message, text='Choose a venue to subscribe',
+    send_message(message=message, text=_('CHOOSE_VENUE'),
                  reply_markup=build_venues_keyboard(subscribe=True, venue_list=venues.retrieve_all_venues()))
 
 
@@ -146,7 +162,7 @@ def subscribe_user_to_venue(message: Message, venue_id: str) -> None:
                        first_name=message.chat.first_name, last_name=message.chat.last_name,
                        venue_id=venue_id)
     logging.info(f'User with id={user_id} subscribed successfully to venue={venue_id}')
-    send_message(message=message, text='You have been subscribed!')
+    send_message(message=message, text=_('SUBSCRIPTION_COMPLETED'))
 
 
 @bot.message_handler(commands=['unsubscribe'])
@@ -154,9 +170,9 @@ def unsubscribe_handler(message: Message) -> None:
     user_id = str(message.chat.id)
     user_venues = users.retrieve_user_venues(user_id=user_id)
     if user_venues is None or len(user_venues) == 0:
-        send_message(message=message, text='You\'re not subscribed to any updates')
+        send_message(message=message, text=_('NO_SUBSCRIPTION'))
     else:
-        send_message(message=message, text='Choose a venue to unsubscribe from',
+        send_message(message=message, text=_('CHOOSE_VENUE'),
                      reply_markup=build_venues_keyboard(subscribe=False, venue_list=user_venues))
 
 
@@ -165,21 +181,21 @@ def unsubscribe_user_from_venue(message: Message, venue_id: str) -> None:
     logging.info(f'Unsubscribing user with id={user_id} from venue={venue_id}')
     users.remove_venue_from_user(user_id=user_id, venue_id=venue_id)
     logging.info(f'User with id={user_id} unsubscribed successfully from venue={venue_id}')
-    send_message(message=message, text='You have been unsubscribed!')
+    send_message(message=message, text=_('UNSUBSCRIPTION_COMPLETED'))
 
 
 def language_handler(message: Message) -> None:
-    send_message(message=message, text='Choose a language', reply_markup=build_language_keyboard())
+    send_message(message=message, text=_('CHOOSE_LANGUAGE'), reply_markup=build_language_keyboard())
 
 
 @bot.message_handler(commands=['ping'])
 def ping_handler(message: Message) -> None:
-    send_message(message=message, text='I\'m alive!')
+    send_message(message=message, text=_('PING_RESPONSE'))
 
 
 @bot.message_handler(func=lambda message: True, content_types=['text'])
 def echo_handler(message: Message) -> None:
-    send_message(message=message, text='Sorry, I don\'t understand')
+    send_message(message=message, text=_('UNKNOWN_COMMAND'))
 
 
 @server.route(settings.PING_PATH, methods=['GET'])
@@ -210,7 +226,8 @@ def notify_users(event: Event) -> None:
     venue_users = users.retrieve_users_by_venue(event.venue_id)
     logging.info(f'Notifying {len(list(venue_users))} users')
     for user in venue_users:
-        bot.send_message(chat_id=user.user_id, text=event_data)  # TODO
+        settings.CURRENT_LOCALE = user.language
+        bot.send_message(chat_id=user.user_id, text=event_data)
 
 
 def register_notifier_webhook() -> None:
@@ -233,8 +250,18 @@ def main():
         bot.infinity_polling()
 
 
-if __name__ == '__main__':
+def _setup_logging() -> None:
     logging.basicConfig(format=settings.LOG_FORMAT, level=settings.LOG_LEVEL)
-    logger = logging.getLogger(__name__)
+
+
+def _setup_i18n() -> None:
+    i18n.set('locale', settings.DEFAULT_LOCALE)
+    i18n.load_path.append('./locale/')
+    i18n.set('filename_format', '{locale}.{format}')
+
+
+if __name__ == '__main__':
+    _setup_logging()
+    _setup_i18n()
 
     main()

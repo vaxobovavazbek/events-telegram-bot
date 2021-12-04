@@ -1,0 +1,23 @@
+{
+  "en": {
+    "MAIN_MENU_PROMPT": "What would you like to do?",
+    "LANGUAGE_SETTINGS_UPDATED": "Language settings updated",
+    "CHOOSE_SETTING": "Choose a setting",
+    "CHOOSE_VENUE": "Choose a venue",
+    "SUBSCRIPTION_COMPLETED": "You have been subscribed!",
+    "NO_SUBSCRIPTION": "You are not subscribed to any venues",
+    "UNSUBSCRIPTION_COMPLETED": "You have been unsubscribed!",
+    "CHOOSE_LANGUAGE": "Choose a language",
+    "PING_RESPONSE": "I am alive!",
+    "UNKNOWN_COMMAND": "Sorry, I do not understand :(",
+    "SUBSCRIBE_MENU_ITEM": "Subscribe to updates",
+    "UNSUBSCRIBE_MENU_ITEM": "Unsubscribe from updates",
+    "SETTINGS_MENU_ITEM": "Settings",
+    "HELP_MENU_ITEM": "Help",
+    "LANGUAGE_MENU_ITEM": "Language",
+    "EVENT_NOTIFICATION_FORMAT": "%{venue}:\n%{description}\ntoday at %{time}",
+    "BLOOMFIELD_STADIUM": "Bloomfield stadium",
+    "SAMMY_OFER_STADIUM": "Sammy Ofer stadium",
+    "HELP_MESSAGE": "Events Notifier Bot -\n\nThe bot that will notify you of upcoming events in your favorite stadiums or venues.\n\nHow to use the bot: \n\nUse the /start or /menu command to show the main menu.\nUse the /subscribe command to subscribe to updates.\nUse the /unsubscribe command to unsubscribe from updates.\nUse the /settings command to configure user settings.\nUse the /help command to show this help message.\n\nFor any questions or issues, please go to - https://github.com/oriash93/events-telegram-bot"
+  }
+}

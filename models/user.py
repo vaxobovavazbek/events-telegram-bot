@@ -10,4 +10,4 @@ class User(Document):
     first_name = StringField(null=True)
     last_name = StringField(null=True)
     venues = ListField(ReferenceField(Venue))
-    language = StringField(default=settings.DEFAULT_LANGUAGE_CODE)
+    language = StringField(default=settings.DEFAULT_LOCALE)

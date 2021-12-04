@@ -16,17 +16,3 @@ VENUE_PREFIX = 'VENUE'
 
 SUBSCRIBE_POSTFIX = 'SUBSCRIBE'
 UNSUBSCRIBE_POSTFIX = 'UNSUBSCRIBE'
-
-WELCOME_MESSAGE = '''Events Notifier Bot -
-
-The bot that will notify you of upcoming events in your favorite stadiums or venues.
-
-How to use the bot: 
-
-Use the /start or /menu command to show the main menu.
-Use the /subscribe command to subscribe to updates.
-Use the /unsubscribe command to unsubscribe from updates.
-Use the /settings command to configure user settings.
-Use the /help command to show this help message.
-
-For any questions or issues, please go to - https://github.com/oriash93/events-telegram-bot'''
