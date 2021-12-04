@@ -97,7 +97,7 @@ def language_callback_handler(callback_query: CallbackQuery) -> None:
     if locale in settings.SUPPORTED_LOCALES.keys():
         users.update_user_language(str(callback_query.message.chat.id), locale)
         settings.CURRENT_LOCALE = locale
-        send_message(message=callback_query.message, text=_('Language settings updated'))
+        send_message(message=callback_query.message, text=_('LANGUAGE_SETTINGS_UPDATED'))
     else:
         raise Warning(f'Language {locale} not supported')
 
@@ -122,12 +122,12 @@ def main_menu_handler(message: Message) -> None:
     keyboard = InlineKeyboardMarkup()
     keyboard.row_width = 1
     keyboard.add(
-        InlineKeyboardButton(text=_('Subscribe to updates'), callback_data=constants.SUBSCRIBE_CALLBACK),
-        InlineKeyboardButton(text=_('Unsubscribe from updates'), callback_data=constants.UNSUBSCRIBE_CALLBACK),
-        InlineKeyboardButton(text=_('Settings'), callback_data=constants.SETTINGS_CALLBACK),
-        InlineKeyboardButton(text=_('Help'), callback_data=constants.HELP_CALLBACK)
+        InlineKeyboardButton(text=_('SUBSCRIBE_MENU_ITEM'), callback_data=constants.SUBSCRIBE_CALLBACK),
+        InlineKeyboardButton(text=_('UNSUBSCRIBE_MENU_ITEM'), callback_data=constants.UNSUBSCRIBE_CALLBACK),
+        InlineKeyboardButton(text=_('SETTINGS_MENU_ITEM'), callback_data=constants.SETTINGS_CALLBACK),
+        InlineKeyboardButton(text=_('HELP_MENU_ITEM'), callback_data=constants.HELP_CALLBACK)
     )
-    send_message(message=message, text=_('What would you like to do?'), reply_markup=keyboard)
+    send_message(message=message, text=_('MAIN_MENU_PROMPT'), reply_markup=keyboard)
 
 
 @bot.message_handler(commands=['settings'])
@@ -135,19 +135,19 @@ def settings_handler(message: Message) -> None:
     keyboard = InlineKeyboardMarkup()
     keyboard.row_width = 1
     keyboard.add(
-        InlineKeyboardButton(text=_('Language'), callback_data=constants.LANGUAGE_CALLBACK),
+        InlineKeyboardButton(text=_('LANGUAGE_MENU_ITEM'), callback_data=constants.LANGUAGE_CALLBACK),
     )
-    send_message(message=message, text=_('Choose a setting'), reply_markup=keyboard)
+    send_message(message=message, text=_('CHOOSE_SETTING'), reply_markup=keyboard)
 
 
 @bot.message_handler(commands=['help'])
 def help_handler(message: Message) -> None:
-    send_message(message=message, text=_('help_message'), disable_web_page_preview=True)
+    send_message(message=message, text=_('HELP_MESSAGE'), disable_web_page_preview=True)
 
 
 @bot.message_handler(commands=['subscribe'])
 def subscribe_handler(message: Message) -> None:
-    send_message(message=message, text=_('Choose a venue to subscribe'),
+    send_message(message=message, text=_('CHOOSE_VENUE'),
                  reply_markup=build_venues_keyboard(subscribe=True, venue_list=venues.retrieve_all_venues()))
 
 
@@ -161,7 +161,7 @@ def subscribe_user_to_venue(message: Message, venue_id: str) -> None:
                        first_name=message.chat.first_name, last_name=message.chat.last_name,
                        venue_id=venue_id)
     logging.info(f'User with id={user_id} subscribed successfully to venue={venue_id}')
-    send_message(message=message, text=_('You have been subscribed!'))
+    send_message(message=message, text=_('SUBSCRIPTION_COMPLETED'))
 
 
 @bot.message_handler(commands=['unsubscribe'])
@@ -169,9 +169,9 @@ def unsubscribe_handler(message: Message) -> None:
     user_id = str(message.chat.id)
     user_venues = users.retrieve_user_venues(user_id=user_id)
     if user_venues is None or len(user_venues) == 0:
-        send_message(message=message, text=_('You\'re not subscribed to any updates'))
+        send_message(message=message, text=_('NO_SUBSCRIPTION'))
     else:
-        send_message(message=message, text=_('Choose a venue to unsubscribe from'),
+        send_message(message=message, text=_('CHOOSE_VENUE'),
                      reply_markup=build_venues_keyboard(subscribe=False, venue_list=user_venues))
 
 
@@ -180,21 +180,21 @@ def unsubscribe_user_from_venue(message: Message, venue_id: str) -> None:
     logging.info(f'Unsubscribing user with id={user_id} from venue={venue_id}')
     users.remove_venue_from_user(user_id=user_id, venue_id=venue_id)
     logging.info(f'User with id={user_id} unsubscribed successfully from venue={venue_id}')
-    send_message(message=message, text=_('You have been unsubscribed!'))
+    send_message(message=message, text=_('UNSUBSCRIPTION_COMPLETED'))
 
 
 def language_handler(message: Message) -> None:
-    send_message(message=message, text=_('Choose a language'), reply_markup=build_language_keyboard())
+    send_message(message=message, text=_('CHOOSE_LANGUAGE'), reply_markup=build_language_keyboard())
 
 
 @bot.message_handler(commands=['ping'])
 def ping_handler(message: Message) -> None:
-    send_message(message=message, text=_('I\'m alive!'))
+    send_message(message=message, text=_('PING_RESPONSE'))
 
 
 @bot.message_handler(func=lambda message: True, content_types=['text'])
 def echo_handler(message: Message) -> None:
-    send_message(message=message, text=_('Sorry, I don\'t understand'))
+    send_message(message=message, text=_('UNKNOWN_COMMAND'))
 
 
 @server.route(settings.PING_PATH, methods=['GET'])
