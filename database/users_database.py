@@ -10,9 +10,8 @@ from models.venue import Venue
 db = connect(host=MONGODB_URI)
 
 
-def add_user(user_id: str, username: str, first_name: str, last_name: str, venue_id: str) -> None:
+def add_user(user_id: str, username: str, first_name: str, last_name: str) -> None:
     User(user_id=user_id, username=username, first_name=first_name, last_name=last_name).save()
-    add_venue_to_user(user_id=user_id, venue_id=venue_id)
 
 
 def retrieve_users_by_venue(venue_id: str) -> List[User]:
