@@ -1,5 +1,6 @@
 import logging
 import logging.config
+import os
 from typing import List
 
 import i18n
@@ -7,12 +8,11 @@ from flask import Flask, request
 from telebot import TeleBot, apihelper
 from telebot.types import Message, InlineKeyboardMarkup, InlineKeyboardButton, CallbackQuery, Update
 
-import bot.constants as constants
-import bot.settings as settings
-import database.users_database as users
-import database.venues_database as venues
 import notifier.notifier_api as notifier_api
+from bot import settings, constants
 from bot.i18n_utils import translate as _
+from database import users_database as users
+from database import venues_database as venues
 from models.event import Event
 from models.venue import Venue
 
@@ -237,16 +237,14 @@ def register_notifier_webhook() -> None:
 
 def main():
     register_notifier_webhook()
+    bot.remove_webhook()
 
     if settings.UPDATE_MODE == 'webhook':
-        bot.remove_webhook()
         bot.set_webhook(url=settings.BOT_WEBHOOK_URL)
-        server.run(host='0.0.0.0', port=settings.PORT)
         logging.info(f'Start webhook mode on port {settings.PORT}')
+        server.run(host='0.0.0.0', port=settings.PORT)
     else:
         logging.info(f'Start polling mode')
-        if bot.get_webhook_info().url:
-            bot.remove_webhook()
         bot.infinity_polling()
 
 
@@ -256,7 +254,8 @@ def _setup_logging() -> None:
 
 def _setup_i18n() -> None:
     i18n.set('locale', settings.DEFAULT_LOCALE)
-    i18n.load_path.append('./locale/')
+    locale_dir = os.path.join(os.path.abspath(os.path.dirname(__file__)), 'locale')
+    i18n.load_path.append(locale_dir)
     i18n.set('filename_format', '{locale}.{format}')
 
 
