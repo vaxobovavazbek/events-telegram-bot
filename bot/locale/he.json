@@ -15,7 +15,7 @@
     "SETTINGS_MENU_ITEM": "הגדרות",
     "HELP_MENU_ITEM": "עזרה",
     "LANGUAGE_MENU_ITEM": "שפה",
-    "EVENT_NOTIFICATION_FORMAT": "%{venue}:\n%{description}\nהיום בשעה%{time}",
+    "EVENT_NOTIFICATION_FORMAT": "%{venue}:\n%{description}\nהיום בשעה %{time}",
     "BLOOMFIELD_STADIUM": "אצטדיון בלומפילד",
     "SAMMY_OFER_STADIUM": "אצטדיון סמי עופר",
     "HELP_MESSAGE": "הבוט שיודיע לך על אירועים קרובים באצטדיונים או במקומות המועדפים עליך.\n\nכיצד להשתמש בבוט:\n\nהשתמש.י בפקודה /start או /menu כדי להציג את התפריט הראשי.\nהשתמש.י בפקודה /subscribe כדי להירשם לעדכונים.\nהשתמש.י בפקודה /unsubscribe כדי לבטל את הרישום לעדכונים.\nהשתמש.י בפקודה /settings כדי לשנות את הגדרות המשתמש.\nהשתמש.י בפקודה /help כדי להציג הודעת עזרה זו.\n\nלכל שאלה או בעיה, תוכלו לבקר בכתובת - https://github.com/oriash93/events-telegram-bot"
