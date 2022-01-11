@@ -22,14 +22,22 @@ bot = TeleBot(settings.BOT_TOKEN)
 server = Flask(__name__)
 
 
-def activate(locale):
-    settings.CURRENT_LOCALE = locale
+@bot.middleware_handler(update_types=['message'])
+def user_management_middleware(bot_instance: TeleBot, message: Message):
+    user_id = str(message.chat.id)
+    if not users.user_exists(user_id):
+        users.add_user(user_id=user_id, username=message.chat.username,
+                       first_name=message.chat.first_name, last_name=message.chat.last_name)
 
 
 @bot.middleware_handler(update_types=['message'])
-def activate_language(bot_instance: TeleBot, message: Message):
+def locale_middleware(bot_instance: TeleBot, message: Message):
     user_id = str(message.chat.id)
-    activate(users.retrieve_user_language(user_id))
+    set_locale(users.retrieve_user_language(user_id))
+
+
+def set_locale(locale):
+    settings.CURRENT_LOCALE = locale
 
 
 def send_message(message: Message, **kwargs) -> None:
@@ -155,12 +163,7 @@ def subscribe_handler(message: Message) -> None:
 def subscribe_user_to_venue(message: Message, venue_id: str) -> None:
     user_id = str(message.chat.id)
     logging.info(f'Subscribing user with id={user_id} to venue={venue_id}')
-    if users.user_exists(user_id=user_id):
-        users.add_venue_to_user(user_id=user_id, venue_id=venue_id)
-    else:
-        users.add_user(user_id=user_id, username=message.chat.username,
-                       first_name=message.chat.first_name, last_name=message.chat.last_name,
-                       venue_id=venue_id)
+    users.add_venue_to_user(user_id=user_id, venue_id=venue_id)
     logging.info(f'User with id={user_id} subscribed successfully to venue={venue_id}')
     send_message(message=message, text=_('SUBSCRIPTION_COMPLETED'))
 
