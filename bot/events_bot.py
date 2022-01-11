@@ -3,6 +3,7 @@ import logging.config
 import os
 from typing import List
 
+import emoji
 import i18n
 from flask import Flask, request
 from telebot import TeleBot, apihelper
@@ -62,7 +63,7 @@ def build_venue_keyboard_button(subscribe: bool, venue: Venue):
     else:
         callback_data = f'{callback_data}_{constants.UNSUBSCRIBE_POSTFIX}'
     callback_data = f'{callback_data}_{venue.venue_id}'
-    return InlineKeyboardButton(_(venue.venue_id), callback_data=callback_data)
+    return InlineKeyboardButton(text=_(venue.venue_id), callback_data=callback_data)
 
 
 def build_language_keyboard() -> InlineKeyboardMarkup:
@@ -70,7 +71,7 @@ def build_language_keyboard() -> InlineKeyboardMarkup:
     markup.row_width = 1
     for language_code, display_name in settings.SUPPORTED_LOCALES.items():
         callback_data = f'{constants.LANGUAGE_PREFIX}_{language_code}'
-        markup.add(InlineKeyboardButton(display_name, callback_data=callback_data))
+        markup.add(InlineKeyboardButton(text=display_name, callback_data=callback_data))
     return markup
 
 
@@ -131,10 +132,14 @@ def main_menu_handler(message: Message) -> None:
     keyboard = InlineKeyboardMarkup()
     keyboard.row_width = 1
     keyboard.add(
-        InlineKeyboardButton(text=_('SUBSCRIBE_MENU_ITEM'), callback_data=constants.SUBSCRIBE_CALLBACK),
-        InlineKeyboardButton(text=_('UNSUBSCRIBE_MENU_ITEM'), callback_data=constants.UNSUBSCRIBE_CALLBACK),
-        InlineKeyboardButton(text=_('SETTINGS_MENU_ITEM'), callback_data=constants.SETTINGS_CALLBACK),
-        InlineKeyboardButton(text=_('HELP_MENU_ITEM'), callback_data=constants.HELP_CALLBACK)
+        InlineKeyboardButton(text=_('SUBSCRIBE_MENU_ITEM') + ' ' + emoji.emojize(':bell:'),
+                             callback_data=constants.SUBSCRIBE_CALLBACK),
+        InlineKeyboardButton(text=_('UNSUBSCRIBE_MENU_ITEM') + ' ' + emoji.emojize(':bell_with_slash:'),
+                             callback_data=constants.UNSUBSCRIBE_CALLBACK),
+        InlineKeyboardButton(text=_('SETTINGS_MENU_ITEM') + ' ' + emoji.emojize(':gear:'),
+                             callback_data=constants.SETTINGS_CALLBACK),
+        InlineKeyboardButton(text=_('HELP_MENU_ITEM') + ' ' + emoji.emojize(':red_question_mark:'),
+                             callback_data=constants.HELP_CALLBACK)
     )
     send_message(message=message, text=_('MAIN_MENU_PROMPT'), reply_markup=keyboard)
 
@@ -144,7 +149,8 @@ def settings_handler(message: Message) -> None:
     keyboard = InlineKeyboardMarkup()
     keyboard.row_width = 1
     keyboard.add(
-        InlineKeyboardButton(text=_('LANGUAGE_MENU_ITEM'), callback_data=constants.LANGUAGE_CALLBACK),
+        InlineKeyboardButton(text=_('LANGUAGE_MENU_ITEM') + ' ' + emoji.emojize(':globe_with_meridians:'),
+                             callback_data=constants.LANGUAGE_CALLBACK),
     )
     send_message(message=message, text=_('CHOOSE_SETTING'), reply_markup=keyboard)
 
@@ -156,7 +162,7 @@ def help_handler(message: Message) -> None:
 
 @bot.message_handler(commands=['subscribe'])
 def subscribe_handler(message: Message) -> None:
-    send_message(message=message, text=_('CHOOSE_VENUE'),
+    send_message(message=message, text=_('CHOOSE_VENUE') + ' ' + emoji.emojize(':stadium:'),
                  reply_markup=build_venues_keyboard(subscribe=True, venue_list=venues.retrieve_all_venues()))
 
 
