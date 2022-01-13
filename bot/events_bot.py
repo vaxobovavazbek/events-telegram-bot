@@ -171,7 +171,7 @@ def subscribe_user_to_venue(message: Message, venue_id: str) -> None:
     logging.info(f'Subscribing user with id={user_id} to venue={venue_id}')
     users.add_venue_to_user(user_id=user_id, venue_id=venue_id)
     logging.info(f'User with id={user_id} subscribed successfully to venue={venue_id}')
-    send_message(message=message, text=_('SUBSCRIPTION_COMPLETED'))
+    send_message(message=message, text=_('SUBSCRIPTION_COMPLETED_FORMAT', venue=_(venue_id)))
 
 
 @bot.message_handler(commands=['unsubscribe'])
@@ -190,7 +190,7 @@ def unsubscribe_user_from_venue(message: Message, venue_id: str) -> None:
     logging.info(f'Unsubscribing user with id={user_id} from venue={venue_id}')
     users.remove_venue_from_user(user_id=user_id, venue_id=venue_id)
     logging.info(f'User with id={user_id} unsubscribed successfully from venue={venue_id}')
-    send_message(message=message, text=_('UNSUBSCRIPTION_COMPLETED'))
+    send_message(message=message, text=_('UNSUBSCRIPTION_COMPLETED_FORMAT', venue=_(venue_id)))
 
 
 def language_handler(message: Message) -> None:
