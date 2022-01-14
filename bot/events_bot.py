@@ -11,7 +11,7 @@ from telebot.types import Message, InlineKeyboardMarkup, InlineKeyboardButton, C
 
 import notifier.notifier_api as notifier_api
 from bot import settings, constants
-from bot.i18n_utils import translate as _
+from bot.i18n_utils import translate as _, set_locale
 from database import users_database as users
 from database import venues_database as venues
 from models.event import Event
@@ -35,10 +35,6 @@ def user_management_middleware(bot_instance: TeleBot, message: Message):
 def locale_middleware(bot_instance: TeleBot, message: Message):
     user_id = str(message.chat.id)
     set_locale(users.retrieve_user_language(user_id))
-
-
-def set_locale(locale):
-    settings.CURRENT_LOCALE = locale
 
 
 def send_message(message: Message, **kwargs) -> None:
@@ -105,9 +101,11 @@ def settings_callback_handler(callback_query: CallbackQuery) -> None:
 def language_callback_handler(callback_query: CallbackQuery) -> None:
     prefix, locale = callback_query.data.split('_', maxsplit=1)
     if locale in settings.SUPPORTED_LOCALES.keys():
-        users.update_user_language(str(callback_query.message.chat.id), locale)
+        user_id = str(callback_query.message.chat.id)
+        users.update_user_language(user_id, locale)
         settings.CURRENT_LOCALE = locale
         send_message(message=callback_query.message, text=_('LANGUAGE_SETTINGS_UPDATED'))
+        logging.info(f'User with id={user_id} updated language settings to {locale}')
     else:
         raise Warning(f'Language {locale} not supported')
 
