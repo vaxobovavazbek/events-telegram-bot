@@ -15,6 +15,10 @@ def add_notifier_webhook(name: str, url: str) -> None:
         r = requests.post(url=NOTIFIER_URL, json=Webhook(name=name, url=url).__dict__)
         r.raise_for_status()
 
+    except requests.exceptions.ConnectionError:
+        logging.warning('Failed to connect to notifier API')
+        return
+
     except Exception:
         logging.error('Notifier API request failed')
         return
