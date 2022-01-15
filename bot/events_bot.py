@@ -191,7 +191,7 @@ def unsubscribe_handler(message: Message) -> None:
     if user_venues is None or len(user_venues) == 0:
         send_message(message=message, text=_('NO_SUBSCRIPTION'))
     else:
-        send_message(message=message, text=_('CHOOSE_VENUE'),
+        send_message(message=message, text=_('CHOOSE_VENUE') + ' ' + emoji.emojize(':stadium:'),
                      reply_markup=build_venues_keyboard(subscribe=False, venue_list=user_venues))
 
 
@@ -214,7 +214,7 @@ def ping_handler(message: Message) -> None:
 
 @bot.message_handler(func=lambda message: True, content_types=['text'])
 def echo_handler(message: Message) -> None:
-    send_message(message=message, text=_('UNKNOWN_COMMAND'))
+    send_message(message=message, text=_('UNKNOWN_COMMAND') + ' ' + emoji.emojize(':thinking_face:'))
 
 
 @server.route(settings.PING_PATH, methods=['GET'])

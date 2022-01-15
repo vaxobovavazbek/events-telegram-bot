@@ -24,6 +24,7 @@ NOTIFIER_URL = f'{NOTIFIER_HOST}{NOTIFIER_PATH}'
 NOTIFIER_WEBHOOK_PATH = '/v1/notify'
 NOTIFIER_WEBHOOK_URL = f'{HOST}{NOTIFIER_WEBHOOK_PATH}'
 
+# i18n settings
 SUPPORTED_LOCALES = {
     'he': 'עברית',
     'en': 'English'
