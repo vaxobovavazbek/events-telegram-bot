@@ -160,8 +160,20 @@ def help_handler(message: Message) -> None:
 
 @bot.message_handler(commands=['subscribe'])
 def subscribe_handler(message: Message) -> None:
+    user_id = str(message.chat.id)
+    user_venues = users.retrieve_user_venues(user_id=user_id)
+    all_venues = venues.retrieve_all_venues()
+    if user_venues is None or len(user_venues) == 0:
+        available_venues = all_venues
+    else:
+        if len(user_venues) == len(all_venues):
+            send_message(message=message, text=_('ALL_SUBSCRIBED'))
+            return
+        else:
+            available_venues = [venue for venue in all_venues if venue not in user_venues]
+
     send_message(message=message, text=_('CHOOSE_VENUE') + ' ' + emoji.emojize(':stadium:'),
-                 reply_markup=build_venues_keyboard(subscribe=True, venue_list=venues.retrieve_all_venues()))
+                 reply_markup=build_venues_keyboard(subscribe=True, venue_list=available_venues))
 
 
 def subscribe_user_to_venue(message: Message, venue_id: str) -> None:

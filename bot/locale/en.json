@@ -5,6 +5,7 @@
     "CHOOSE_SETTING": "Choose a setting",
     "CHOOSE_VENUE": "Choose a venue",
     "NO_SUBSCRIPTION": "You are not subscribed to any venues",
+    "ALL_SUBSCRIBED": "You are already subscribed to all venues",
     "CHOOSE_LANGUAGE": "Choose a language",
     "PING_RESPONSE": "I am alive!",
     "UNKNOWN_COMMAND": "Sorry, I do not understand :(",
