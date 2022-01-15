@@ -77,6 +77,8 @@ def main_menu_callback_handler(callback_query: CallbackQuery) -> None:
         subscribe_handler(message=callback_query.message)
     elif callback_query.data == constants.UNSUBSCRIBE_CALLBACK:
         unsubscribe_handler(message=callback_query.message)
+    elif callback_query.data == constants.EVENTS_TODAY_CALLBACK:
+        events_today_handler(message=callback_query.message)
     elif callback_query.data == constants.HELP_CALLBACK:
         help_handler(message=callback_query.message)
     elif callback_query.data == constants.SETTINGS_CALLBACK:
@@ -134,12 +136,23 @@ def main_menu_handler(message: Message) -> None:
                              callback_data=constants.SUBSCRIBE_CALLBACK),
         InlineKeyboardButton(text=_('UNSUBSCRIBE_MENU_ITEM') + ' ' + emoji.emojize(':bell_with_slash:'),
                              callback_data=constants.UNSUBSCRIBE_CALLBACK),
+        InlineKeyboardButton(text=_('EVENTS_TODAY_MENU_ITEM') + ' ' + emoji.emojize(':calendar:'),
+                             callback_data=constants.EVENTS_TODAY_CALLBACK),
         InlineKeyboardButton(text=_('SETTINGS_MENU_ITEM') + ' ' + emoji.emojize(':gear:'),
                              callback_data=constants.SETTINGS_CALLBACK),
         InlineKeyboardButton(text=_('HELP_MENU_ITEM') + ' ' + emoji.emojize(':red_question_mark:'),
                              callback_data=constants.HELP_CALLBACK)
     )
     send_message(message=message, text=_('MAIN_MENU_PROMPT'), reply_markup=keyboard)
+
+
+@bot.message_handler(commands=['today'])
+def events_today_handler(message: Message) -> None:
+    events = notifier_api.get_today_events()
+    if events is None or len(events) == 0:
+        send_message(message=message, text=_('NO_EVENTS_TODAY'))
+    for event in events:
+        notify_users(event=event, user_id=str(message.chat.id))
 
 
 @bot.message_handler(commands=['settings'])
@@ -240,12 +253,14 @@ def notify_webhook():
     return {}, 200
 
 
-def notify_users(event: Event) -> None:
+def notify_users(event: Event, user_id: str = None) -> None:
     event_data = str(event)
-    venue_users = users.retrieve_users_by_venue(event.venue_id)
+    if user_id is not None:
+        venue_users = list(users.retrieve_user_by_user_id(user_id=user_id))
+    else:
+        venue_users = users.retrieve_users_by_venue(venue_id=event.venue_id)
     logging.info(f'Notifying {len(list(venue_users))} users')
     for user in venue_users:
-        settings.CURRENT_LOCALE = user.language
         bot.send_message(chat_id=user.user_id, text=event_data)
 
 

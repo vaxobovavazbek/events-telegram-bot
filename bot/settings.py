@@ -19,8 +19,6 @@ MONGODB_URI = os.getenv('MONGODB_URI', f'mongodb://localhost:27017/{DATABASE_NAM
 
 # notifier settings
 NOTIFIER_HOST = os.getenv('NOTIFIER_HOST', 'http://localhost:3800')
-NOTIFIER_PATH = '/v1/webhooks'
-NOTIFIER_URL = f'{NOTIFIER_HOST}{NOTIFIER_PATH}'
 NOTIFIER_WEBHOOK_PATH = '/v1/notify'
 NOTIFIER_WEBHOOK_URL = f'{HOST}{NOTIFIER_WEBHOOK_PATH}'
 

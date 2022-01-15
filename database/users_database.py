@@ -14,6 +14,10 @@ def add_user(user_id: str, username: str, first_name: str, last_name: str) -> No
     User(user_id=user_id, username=username, first_name=first_name, last_name=last_name).save()
 
 
+def retrieve_user_by_user_id(user_id: str) -> User:
+    return User.objects(user_id=user_id)
+
+
 def retrieve_users_by_venue(venue_id: str) -> List[User]:
     venue = venues.retrieve_venue_by_venue_id(venue_id=venue_id)
     return User.objects.filter(venues__in=[venue])
