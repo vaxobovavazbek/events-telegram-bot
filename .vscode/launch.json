@@ -1,0 +1,15 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "Python: Run telegram bot",
+            "type": "python",
+            "request": "launch",
+            "program": "bot/events_bot.py",
+            "console": "integratedTerminal",
+            "env": {
+                "PYTHONPATH": "${cwd}"
+            }
+        }
+    ]
+}
