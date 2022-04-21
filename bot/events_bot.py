@@ -277,9 +277,11 @@ def main():
         bot.set_webhook(url=settings.BOT_WEBHOOK_URL)
         logging.info(f'Start webhook mode on port {settings.PORT}')
         server.run(host='0.0.0.0', port=settings.PORT)
-    else:
+    elif settings.UPDATE_MODE == 'polling':
         logging.info(f'Start polling mode')
         bot.infinity_polling()
+    else:
+        logging.info('bot created, not recieving updates')
 
 
 def _setup_logging() -> None:
