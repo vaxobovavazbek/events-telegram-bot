@@ -282,6 +282,7 @@ def main():
         bot.infinity_polling()
     else:
         logging.info('bot created, not recieving updates')
+        logging.info(f'settings {settings.HOST} {settings.PORT}')
 
 
 def _setup_logging() -> None:
