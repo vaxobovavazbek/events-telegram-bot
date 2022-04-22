@@ -1,6 +1,7 @@
 import logging
 import logging.config
 import os
+import threading
 from typing import List
 
 import emoji
@@ -273,17 +274,8 @@ def main():
     register_notifier_webhook()
     bot.remove_webhook()
 
-    if settings.UPDATE_MODE == 'webhook':
-        logging.info(f'Starting webhook mode on url={settings.BOT_WEBHOOK_URL} and port={settings.PORT}')
-        bot.set_webhook(url=settings.BOT_WEBHOOK_URL)
-        server.run(host='0.0.0.0', port=settings.PORT)
-    elif settings.UPDATE_MODE == 'polling':
-        logging.info(f'Starting polling mode')
-        bot.infinity_polling()
-    else:
-        logging.info('bot created, not recieving updates')
-        logging.info(f'settings {settings.HOST} {settings.PORT}')
-
+    logging.info(f'Starting polling mode')
+    bot.infinity_polling()
 
 def _setup_logging() -> None:
     logging.basicConfig(format=settings.LOG_FORMAT, level=settings.LOG_LEVEL)
@@ -295,9 +287,16 @@ def _setup_i18n() -> None:
     i18n.load_path.append(locale_dir)
     i18n.set('filename_format', '{locale}.{format}')
 
+class FlaskThread(threading.Thread):
+    def run(self) -> None:
+        server.run(host="0.0.0.0")
+
 
 if __name__ == '__main__':
     _setup_logging()
     _setup_i18n()
+
+    flask_thread = FlaskThread()
+    flask_thread.start()
 
     main()
