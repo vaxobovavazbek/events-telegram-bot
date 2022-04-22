@@ -274,11 +274,11 @@ def main():
     bot.remove_webhook()
 
     if settings.UPDATE_MODE == 'webhook':
+        logging.info(f'Starting webhook mode on url={settings.BOT_WEBHOOK_URL} and port={settings.PORT}')
         bot.set_webhook(url=settings.BOT_WEBHOOK_URL)
-        logging.info(f'Start webhook mode on port {settings.PORT}')
         server.run(host='0.0.0.0', port=settings.PORT)
     elif settings.UPDATE_MODE == 'polling':
-        logging.info(f'Start polling mode')
+        logging.info(f'Starting polling mode')
         bot.infinity_polling()
     else:
         logging.info('bot created, not recieving updates')
